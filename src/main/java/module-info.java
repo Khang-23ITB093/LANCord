@@ -7,9 +7,6 @@ module edu.vku.lancord {
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
 
-    opens edu.vku.lancord to javafx.fxml;
-    exports edu.vku.lancord;
-    
     opens edu.vku.lancord.client.ui to javafx.fxml;
     exports edu.vku.lancord.client.ui;
     

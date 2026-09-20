@@ -1,6 +1,7 @@
 package edu.vku.lancord.common.protocol;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -21,5 +22,9 @@ public class JsonUtil {
 
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) throws JsonProcessingException {
         return mapper.treeToValue(node, clazz);
+    }
+
+    public static <T> T treeToValue(JsonNode node, TypeReference<T> typeRef) {
+        return mapper.convertValue(node, typeRef);
     }
 }
