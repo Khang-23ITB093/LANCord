@@ -1,0 +1,25 @@
+package edu.vku.lancord.common.protocol;
+
+public enum MessageType {
+    LOGIN,
+    LOGIN_RESP,
+    ONLINE_USERS_UPDATE,
+    CREATE_GROUP,
+    CREATE_GROUP_RESP,
+    GROUP_INVITE,
+    GROUP_INVITE_RESP,
+    CREATE_CHANNEL,
+    CREATE_CHANNEL_RESP,
+    SEND_DM,
+    SEND_GROUP_MSG,
+    NEW_MESSAGE_NOTIFY,
+    UPLOAD_FILE_INIT,
+    UPLOAD_FILE_RESP,
+    FILE_CHUNK,
+    FILE_UPLOAD_COMPLETE,
+    DOWNLOAD_FILE_REQ,
+    DOWNLOAD_FILE_RESP,
+    STREAM_START,
+    STREAM_STARTED, // Contains multicast IP and port
+    ERROR
+}
