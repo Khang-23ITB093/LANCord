@@ -18,6 +18,12 @@ public class ClientMain extends Application {
         Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
         primaryStage = stage;
         
+        // Ensure client downloads directory exists
+        java.nio.file.Path downloadDir = java.nio.file.Paths.get("client_downloads");
+        if (!java.nio.file.Files.exists(downloadDir)) {
+            java.nio.file.Files.createDirectories(downloadDir);
+        }
+
         switchScene("login.fxml", "LANCord - Login");
         
         stage.show();

@@ -27,4 +27,8 @@ public class JsonUtil {
     public static <T> T treeToValue(JsonNode node, TypeReference<T> typeRef) {
         return mapper.convertValue(node, typeRef);
     }
+
+    public static com.fasterxml.jackson.databind.node.ObjectNode createObjectNode() {
+        return mapper.createObjectNode();
+    }
 }

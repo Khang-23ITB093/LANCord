@@ -11,6 +11,7 @@ public class FileMetadata {
     private String storedName;
     private long fileSize;
     private Timestamp createdAt;
+    private String uploaderName; // For UI display
 
     public FileMetadata() {}
 
@@ -30,4 +31,6 @@ public class FileMetadata {
     public void setFileSize(long fileSize) { this.fileSize = fileSize; }
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public String getUploaderName() { return uploaderName; }
+    public void setUploaderName(String uploaderName) { this.uploaderName = uploaderName; }
 }

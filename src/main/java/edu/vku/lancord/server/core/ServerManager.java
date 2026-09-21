@@ -38,7 +38,9 @@ public class ServerManager {
         try {
             List<User> userList = new ArrayList<>();
             for (ClientHandler h : onlineUsers.values()) {
-                userList.add(h.getUser());
+                if (h.getUser() != null) {
+                    userList.add(h.getUser());
+                }
             }
             Message msg = new Message(MessageType.ONLINE_USERS_UPDATE, JsonUtil.valueToTree(userList));
             broadcast(msg);

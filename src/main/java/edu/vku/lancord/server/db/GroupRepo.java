@@ -10,7 +10,7 @@ import java.util.List;
 public class GroupRepo {
     public static Group createGroup(String name, int createdBy) throws SQLException {
         Connection conn = DatabaseManager.getConnection();
-        String sql = "INSERT INTO groups (name, created_by) VALUES (?, ?)";
+        String sql = "INSERT INTO chat_groups (name, created_by) VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, name);
             stmt.setInt(2, createdBy);

@@ -7,39 +7,48 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.vku.lancord.client.ui.LoginController">
-    <padding>
-        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-    </padding>
+<VBox alignment="CENTER" styleClass="dark-bg" stylesheets="@discord-theme.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="edu.vku.lancord.client.ui.LoginController">
+    <VBox alignment="CENTER" maxWidth="480.0" spacing="20.0" style="-fx-background-color: #36393F; -fx-background-radius: 8px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 5);">
+        <padding>
+            <Insets bottom="32.0" left="32.0" right="32.0" top="32.0" />
+        </padding>
 
-    <Label text="LANCord">
-        <font>
-            <Font name="System Bold" size="36.0" />
-        </font>
-    </Label>
-    <Label text="Welcome back!" textFill="#b5bac1">
-        <font>
-            <Font size="14.0" />
-        </font>
-    </Label>
-
-    <VBox alignment="CENTER_LEFT" spacing="5.0">
-        <Label text="SERVER IP" textFill="#b5bac1">
+        <Label text="LANCord" textFill="WHITE">
             <font>
-                <Font name="System Bold" size="12.0" />
+                <Font name="System Bold" size="24.0" />
             </font>
         </Label>
-        <TextField fx:id="serverIpField" promptText="127.0.0.1" />
-    </VBox>
-
-    <VBox alignment="CENTER_LEFT" spacing="5.0">
-        <Label text="USERNAME" textFill="#b5bac1">
+        <Label text="Welcome back! We're so excited to see you again!" textFill="#B5BAC1">
             <font>
-                <Font name="System Bold" size="12.0" />
+                <Font size="14.0" />
             </font>
+            <VBox.margin>
+                <Insets bottom="10.0" />
+            </VBox.margin>
         </Label>
-        <TextField fx:id="usernameField" promptText="Enter username" />
-    </VBox>
 
-    <Button fx:id="loginButton" mnemonicParsing="false" onAction="#onLoginClick" prefWidth="200.0" text="Log In" textFill="WHITE" style="-fx-background-color: #5865F2;" />
+        <VBox alignment="CENTER_LEFT" spacing="8.0">
+            <Label text="SERVER IP" textFill="#B5BAC1">
+                <font>
+                    <Font name="System Bold" size="12.0" />
+                </font>
+            </Label>
+            <TextField fx:id="serverIpField" promptText="127.0.0.1" style="-fx-background-color: #1E1F22; -fx-text-fill: #DBDEE1;" />
+        </VBox>
+
+        <VBox alignment="CENTER_LEFT" spacing="8.0">
+            <Label text="USERNAME" textFill="#B5BAC1">
+                <font>
+                    <Font name="System Bold" size="12.0" />
+                </font>
+            </Label>
+            <TextField fx:id="usernameField" promptText="Enter username" style="-fx-background-color: #1E1F22; -fx-text-fill: #DBDEE1;" />
+        </VBox>
+
+        <Button fx:id="loginButton" mnemonicParsing="false" onAction="#onLoginClick" prefWidth="416.0" text="Log In" styleClass="button">
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </Button>
+    </VBox>
 </VBox>

@@ -13,6 +13,9 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class LoginController {
 
     @FXML private TextField usernameField;
@@ -21,6 +24,7 @@ public class LoginController {
 
     public static TCPConnection connection;
     public static User currentUser;
+    public static Queue<Message> pendingMessages = new ConcurrentLinkedQueue<>();
 
     @FXML
     public void initialize() {
@@ -64,6 +68,8 @@ public class LoginController {
                     showAlert("Login Error", msg.getPayload().asText());
                     loginButton.setDisable(false);
                     connection.close();
+                } else {
+                    pendingMessages.add(msg);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

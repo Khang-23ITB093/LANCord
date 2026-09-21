@@ -33,3 +33,12 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Antigravity & Agent Files ###
+.agents/
+.codegraph/
+.agents/
+
+client_downloads/
+
+server_storage/

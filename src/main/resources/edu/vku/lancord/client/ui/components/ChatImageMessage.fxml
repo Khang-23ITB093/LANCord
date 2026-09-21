@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="edu.vku.lancord.client.ui.components.ChatImageMessageController"
+      spacing="12" alignment="TOP_LEFT" styleClass="chat-message-row">
+    <padding><Insets top="6" bottom="6" left="16" right="16"/></padding>
+    <Circle fx:id="avatarCircle" radius="18" fill="#5865F2"/>
+    <VBox spacing="6">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label fx:id="senderLabel" styleClass="message-sender-name"/>
+            <Label fx:id="timestampLabel" styleClass="message-timestamp"/>
+        </HBox>
+        <ImageView fx:id="imageView" preserveRatio="true" fitWidth="320" fitHeight="240"
+                   styleClass="message-image" pickOnBounds="true"/>
+        <Label fx:id="statusLabel" styleClass="message-timestamp" text="Loading..."/>
+    </VBox>
+</HBox>

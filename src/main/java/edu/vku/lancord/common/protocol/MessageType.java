@@ -21,5 +21,10 @@ public enum MessageType {
     DOWNLOAD_FILE_RESP,
     STREAM_START,
     STREAM_STARTED, // Contains multicast IP and port
-    ERROR
+    ERROR,
+    GET_CHAT_HISTORY,
+    CHAT_HISTORY_RESP,
+    FILE_UPLOAD_NOTIFY,        // Server broadcasts to others when a file upload completes
+    GET_FILES_IN_CONTEXT,      // Client requests list of files in a DM or Group
+    FILES_IN_CONTEXT_RESP      // Server responds with list of FileMetadata
 }

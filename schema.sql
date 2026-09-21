@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS groups (
+CREATE TABLE IF NOT EXISTS chat_groups (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     created_by INT,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS group_members (
     user_id INT,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (group_id, user_id),
-    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS channels (
     group_id INT,
     name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
+    FOREIGN KEY (group_id) REFERENCES chat_groups(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS messages (

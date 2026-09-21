@@ -21,8 +21,13 @@ public class ServerMain {
         try {
             // Initialize database connection
             DatabaseManager.getConnection();
-        } catch (SQLException e) {
-            System.err.println("Failed to connect to MySQL database. Make sure it is running.");
+            // Ensure server storage directory exists
+            java.nio.file.Path storageDir = java.nio.file.Paths.get("server_storage");
+            if (!java.nio.file.Files.exists(storageDir)) {
+                java.nio.file.Files.createDirectories(storageDir);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to initialize server (DB or storage): " + e.getMessage());
             e.printStackTrace();
             return;
         }

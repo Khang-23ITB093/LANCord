@@ -107,6 +107,12 @@ public class ClientHandler implements Runnable {
                 case STREAM_START:
                     handleStreamStart(payload);
                     break;
+                case GET_CHAT_HISTORY:
+                    handleGetChatHistory(payload);
+                    break;
+                case GET_FILES_IN_CONTEXT:
+                    handleGetFilesInContext(payload);
+                    break;
                 default:
                     System.out.println("Unknown message type: " + msg.getType());
             }
@@ -123,10 +129,11 @@ public class ClientHandler implements Runnable {
             u = UserRepo.createUser(username);
         }
         
+        this.user = u;
         if (ServerManager.registerUser(u, this)) {
-            this.user = u;
             sendMessage(new Message(MessageType.LOGIN_RESP, JsonUtil.valueToTree(u)));
         } else {
+            this.user = null;
             sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("User already online")));
         }
     }
@@ -183,34 +190,51 @@ public class ClientHandler implements Runnable {
         long fileSize = payload.get("size").asLong();
         String contextType = payload.get("contextType").asText();
         int contextId = payload.get("contextId").asInt();
-        
+
+        if (fileSize > FileRepo.MAX_FILE_SIZE) {
+            sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("File exceeds 50MB limit")));
+            return;
+        }
+
         String storedName = UUID.randomUUID().toString() + "_" + originalName;
         FileMetadata meta = FileRepo.saveFileMetadata(user.getId(), contextType, contextId, originalName, storedName, fileSize);
-        
+        meta.setUploaderName(user.getUsername());
+
         sendMessage(new Message(MessageType.UPLOAD_FILE_RESP, JsonUtil.valueToTree(meta)));
     }
 
     private void handleFileChunk(JsonNode payload) throws Exception {
         int fileId = payload.get("fileId").asInt();
         byte[] chunk = payload.get("chunk").binaryValue(); // Base64 decoded automatically by Jackson
-        
+
         FileMetadata meta = FileRepo.getFileMetadata(fileId);
         if (meta != null) {
             Path path = Paths.get(STORAGE_DIR, meta.getStoredName());
+            if (path.getParent() != null && !Files.exists(path.getParent())) {
+                Files.createDirectories(path.getParent());
+            }
             Files.write(path, chunk, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
-            
-            // Check if file size on disk == meta.getFileSize()
+
             if (Files.size(path) >= meta.getFileSize()) {
-                // Notify relevant users
+                // Re-fetch to include uploaderName from DB join
+                meta = FileRepo.getFileMetadata(fileId);
                 ObjectNode notifyNode = (ObjectNode) JsonUtil.valueToTree(meta);
-                Message notifyMsg = new Message(MessageType.FILE_UPLOAD_COMPLETE, notifyNode);
-                
+
+                // Send FILE_UPLOAD_COMPLETE back to uploader
+                sendMessage(new Message(MessageType.FILE_UPLOAD_COMPLETE, notifyNode));
+
+                // Broadcast FILE_UPLOAD_NOTIFY to others in the conversation
+                Message notifyMsg = new Message(MessageType.FILE_UPLOAD_NOTIFY, notifyNode);
                 if (meta.getContextType().equals("DM")) {
                     ServerManager.sendToUser(meta.getContextId(), notifyMsg);
-                    sendMessage(notifyMsg); // send back to uploader
                 } else {
                     List<Integer> members = GroupRepo.getGroupMembers(meta.getContextId());
-                    ServerManager.sendToUsers(members, notifyMsg);
+                    // Exclude uploader from notify (they already got FILE_UPLOAD_COMPLETE)
+                    for (int memberId : members) {
+                        if (memberId != user.getId()) {
+                            ServerManager.sendToUser(memberId, notifyMsg);
+                        }
+                    }
                 }
             }
         }
@@ -247,5 +271,31 @@ public class ClientHandler implements Runnable {
         
         List<Integer> members = GroupRepo.getGroupMembers(groupId);
         ServerManager.sendToUsers(members, new Message(MessageType.STREAM_STARTED, notifyNode));
+    }
+
+    private void handleGetChatHistory(JsonNode payload) throws Exception {
+        String type = payload.get("type").asText();
+        int contextId = payload.get("contextId").asInt();
+        List<ChatMessage> history = MessageRepo.getChatHistory(type, user.getId(), contextId);
+
+        ObjectNode resp = JsonUtil.createObjectNode();
+        resp.put("type", type);
+        resp.put("contextId", contextId);
+        resp.set("messages", JsonUtil.valueToTree(history));
+
+        sendMessage(new Message(MessageType.CHAT_HISTORY_RESP, resp));
+    }
+
+    private void handleGetFilesInContext(JsonNode payload) throws Exception {
+        String contextType = payload.get("contextType").asText();
+        int contextId = payload.get("contextId").asInt();
+        List<FileMetadata> files = FileRepo.getFilesInContext(contextType, user.getId(), contextId);
+
+        ObjectNode resp = JsonUtil.createObjectNode();
+        resp.put("contextType", contextType);
+        resp.put("contextId", contextId);
+        resp.set("files", JsonUtil.valueToTree(files));
+
+        sendMessage(new Message(MessageType.FILES_IN_CONTEXT_RESP, resp));
     }
 }
