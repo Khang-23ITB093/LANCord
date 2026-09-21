@@ -41,7 +41,7 @@ LANCord là một ứng dụng nhắn tin và chia sẻ màn hình theo mô hìn
 1. Đăng nhập bằng username.
 2. Hiển thị danh sách online realtime.
 3. Chat DM 1-1 (cơ bản).
-4. Screen streaming qua UDP Multicast.
+4. Gửi file, hình ảnh, video, âm thanh
 5. Setup database, kiến trúc message JSON linh hoạt.
 
 > **Lưu ý**: Một số chức năng như Group, Channel UI, Upload/Download file vật lý cần được hoàn thiện thêm logic giao diện (code server đã hỗ trợ khung sườn).
