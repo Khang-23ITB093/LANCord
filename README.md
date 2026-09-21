@@ -37,11 +37,23 @@ LANCord là một ứng dụng nhắn tin và chia sẻ màn hình theo mô hìn
 - **TCP Socket**: Dùng cho Client-Server control plane. Tất cả tín hiệu (Login, Chat, Tạo Group, Upload File metadata) đều truyền qua TCP dưới dạng Newline-delimited JSON.
 - **UDP Multicast**: Dùng riêng cho tính năng Screen Sharing ("Go Live"). Khi một user stream, Server chỉ cấp phát IP Multicast. Client dùng `java.awt.Robot` để chụp ảnh màn hình, nén JPEG, chia nhỏ thành các gói UDP và bắn trực tiếp vào Multicast Group. Các client khác join group này để nhận ảnh mà không đi qua server.
 
-## Tính năng đã làm (Phase 1)
-1. Đăng nhập bằng username.
-2. Hiển thị danh sách online realtime.
-3. Chat DM 1-1 (cơ bản).
-4. Gửi file, hình ảnh, video, âm thanh
-5. Setup database, kiến trúc message JSON linh hoạt.
+## Tiến độ Dự án & Backlog
 
-> **Lưu ý**: Một số chức năng như Group, Channel UI, Upload/Download file vật lý cần được hoàn thiện thêm logic giao diện (code server đã hỗ trợ khung sườn).
+### ✅ Tính năng đã làm (Thực tế đã chạy được)
+- **Hệ thống tin nhắn cơ bản**: Gửi tin nhắn văn bản (Text).
+- **Truyền tải tệp tin (File Transfer)**: 
+  - Gửi và nhận file (Ảnh, Audio, Tệp tin chung).
+  - Tích hợp bộ nhớ đệm cục bộ (`upload_cache.properties`) giúp người gửi không phải tải lại file vừa gửi.
+- **Kết nối cơ bản**: Nhập username là có thể kết nối vào hệ thống chat (chưa có bảo mật).
+- **Kiến trúc mạng UDP Multicast**: Khung truyền phát Screen Streaming bằng gói tin UDP.
+
+### 🚧 Chưa Làm / Đang Phát Triển (Backlog & To-Do)
+1. **Quản lý Tài khoản & Bảo mật**: Cần hệ thống Đăng nhập / Đăng ký có mật khẩu, Session/Token, Profile User.
+2. **Quản lý Nhóm và Kênh (Discord-like)**: Giao thức mạng đã có, nhưng chưa có UI và logic hoạt động thực tế cho việc tạo nhóm, mời người, phân quyền, phân kênh.
+3. **Gọi thoại / Video Streaming**: Mới có bộ khung UDP Multicast, cần bắt luồng từ Camera/Microphone thực tế.
+4. **Nâng cấp UX/UI**:
+   - Thanh tiến trình (Progress Bar) khi Upload/Download file lớn.
+   - Typing Indicator (Hiển thị trạng thái "đang soạn tin nhắn...").
+   - Trạng thái Hoạt động (Online/Offline Realtime cho User/Group).
+
+> Chi tiết phân công và tiến độ cụ thể vui lòng tham khảo file [PROGRESS.md](./PROGRESS.md).
