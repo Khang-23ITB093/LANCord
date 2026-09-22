@@ -15,7 +15,7 @@ LANCord là một ứng dụng nhắn tin và chia sẻ màn hình theo mô hìn
 ## Hướng dẫn cài đặt
 1. **Khởi tạo Database**:
    - Chạy MySQL server.
-   - Chạy script `schema.sql` ở thư mục gốc để tạo bảng. Mặc định `DatabaseManager.java` kết nối tới `localhost:3306`, user `root`, pass `root`, db `lancord`. Nếu khác, vui lòng sửa lại trong `DatabaseManager.java`.
+   - Chạy script `schema.sql` ở thư mục gốc để tạo bảng. Mặc định `DatabaseManager.java` kết nối tới `localhost:3306`, db `lancord`. Nếu khác, vui lòng sửa lại trong `DatabaseManager.java`.
 
 2. **Build dự án**:
    ```bash
