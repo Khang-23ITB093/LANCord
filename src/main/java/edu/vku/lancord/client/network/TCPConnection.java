@@ -61,4 +61,8 @@ public class TCPConnection {
             e.printStackTrace();
         }
     }
+
+    public boolean isConnected() {
+        return socket != null && !socket.isClosed();
+    }
 }

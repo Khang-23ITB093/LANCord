@@ -4,18 +4,44 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.shape.Circle?>
 
-<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<!--
+  Discord-style chat message row.
+  Layout:
+  [Avatar 36px] [Sender Name  Today at HH:mm]
+                [Message content text...]
+-->
+<HBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="edu.vku.lancord.client.ui.components.ChatTextMessageController"
-      spacing="12" alignment="TOP_LEFT" styleClass="chat-message-row">
-    <padding><Insets top="6" bottom="6" left="16" right="16"/></padding>
-    <Circle fx:id="avatarCircle" radius="18" fill="#5865F2"/>
-    <VBox spacing="3">
-        <HBox spacing="10" alignment="CENTER_LEFT">
+      fx:id="messageRow"
+      spacing="16" alignment="TOP_LEFT"
+      styleClass="chat-message-row"
+      style="-fx-padding: 2 16 2 16; -fx-cursor: default;">
+
+    <!-- Avatar (36x36) -->
+    <StackPane minWidth="36" minHeight="36" maxWidth="36" maxHeight="36"
+               alignment="CENTER">
+        <Circle fx:id="avatarCircle" radius="18" fill="#5865F2"/>
+        <Label fx:id="avatarInitialLabel" text="?"
+               style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14;"/>
+    </StackPane>
+
+    <!-- Content column -->
+    <VBox spacing="3" HBox.hgrow="ALWAYS">
+
+        <!-- Sender + timestamp row -->
+        <HBox spacing="8" alignment="CENTER_LEFT">
             <Label fx:id="senderLabel" styleClass="message-sender-name"/>
             <Label fx:id="timestampLabel" styleClass="message-timestamp"/>
         </HBox>
-        <Label fx:id="contentLabel" wrapText="true" styleClass="message-text"/>
+
+        <!-- Message content (wraps) -->
+        <Label fx:id="contentLabel" wrapText="true"
+               maxWidth="Infinity"
+               styleClass="message-content"/>
     </VBox>
 </HBox>

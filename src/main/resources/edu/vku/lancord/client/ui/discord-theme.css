@@ -1,35 +1,60 @@
-/* discord-theme.css */
+/* ═══════════════════════════════════════════════════════════════
+   LANCord Discord Theme — Full Design System
+   Color tokens extracted from Discord's official dark theme
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Global Root & Font ─────────────────────────────────────── */
 .root {
-    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
     -fx-font-size: 14px;
+    -fx-background-color: #313338;
 }
 
-/* ScrollBars */
-.scroll-bar:vertical {
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBARS
+   ═══════════════════════════════════════════════════════════════ */
+.scroll-bar {
     -fx-background-color: transparent;
+}
+.scroll-bar:vertical {
     -fx-pref-width: 8px;
 }
-.scroll-bar:vertical .thumb {
+.scroll-bar:horizontal {
+    -fx-pref-height: 8px;
+}
+.scroll-bar .thumb {
     -fx-background-color: #1A1B1E;
     -fx-background-radius: 4px;
 }
-.scroll-bar:vertical .track {
+.scroll-bar .track {
     -fx-background-color: transparent;
 }
-.scroll-bar:vertical .increment-button, .scroll-bar:vertical .decrement-button {
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
     -fx-background-color: transparent;
     -fx-pref-height: 0px;
+    -fx-pref-width: 0px;
+}
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
 }
 
-/* ListView */
+/* ═══════════════════════════════════════════════════════════════
+   LISTVIEW & CELLS
+   ═══════════════════════════════════════════════════════════════ */
 .list-view {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
+    -fx-padding: 0;
 }
 .list-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #DBDEE1;
-    -fx-padding: 8px 10px;
+    -fx-padding: 2px 8px;
     -fx-font-size: 15px;
 }
 .list-cell:empty {
@@ -44,61 +69,220 @@
     -fx-background-color: #404249;
     -fx-background-radius: 4px;
 }
+.list-cell:filled:selected:hover {
+    -fx-background-color: #43464D;
+    -fx-background-radius: 4px;
+}
 
-/* TextFields */
+/* ═══════════════════════════════════════════════════════════════
+   TEXT FIELDS
+   ═══════════════════════════════════════════════════════════════ */
 .text-field {
-    -fx-background-color: #383A40;
+    -fx-background-color: transparent;
     -fx-text-fill: #DBDEE1;
     -fx-prompt-text-fill: #87898C;
     -fx-border-color: transparent;
-    -fx-background-radius: 8px;
-    -fx-padding: 10px 14px;
+    -fx-background-radius: 0;
+    -fx-padding: 11px 0;
+    -fx-font-size: 15px;
 }
 .text-field:focused {
-    -fx-background-color: #383A40;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
 }
 
-/* Buttons */
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS — Base
+   ═══════════════════════════════════════════════════════════════ */
 .button {
-    -fx-background-color: #5865F2;
-    -fx-text-fill: white;
+    -fx-background-color: #4E5058;
+    -fx-text-fill: #DBDEE1;
     -fx-font-weight: bold;
     -fx-background-radius: 4px;
     -fx-padding: 8px 16px;
     -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-border-color: transparent;
 }
 .button:hover {
+    -fx-background-color: #5B5E66;
+}
+.button:pressed {
+    -fx-background-color: #43454B;
+}
+
+/* ── Blurple primary button ── */
+.btn-primary {
+    -fx-background-color: #5865F2;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+.btn-primary:hover {
     -fx-background-color: #4752C4;
 }
 
-/* Specific Buttons */
-#uploadButton {
-    -fx-background-color: #B5BAC1;
-    -fx-background-radius: 50%;
+/* ── Green success button ── */
+.btn-success {
+    -fx-background-color: #23A559;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+.btn-success:hover {
+    -fx-background-color: #1A8A48;
+}
+
+/* ── Red danger button ── */
+.btn-danger {
+    -fx-background-color: #ED4245;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+.btn-danger:hover {
+    -fx-background-color: #C73336;
+}
+
+/* ── Ghost / icon-only button ── */
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #B5BAC1;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-padding: 6px;
+}
+.btn-ghost:hover {
+    -fx-background-color: #35373C;
+    -fx-text-fill: #DBDEE1;
+}
+
+/* ── Upload (+) button ── */
+#uploadButton, #uploadButtonGroup {
+    -fx-background-color: transparent;
+    -fx-text-fill: #B5BAC1;
     -fx-min-width: 32px;
     -fx-min-height: 32px;
     -fx-max-width: 32px;
     -fx-max-height: 32px;
+    -fx-background-radius: 50%;
     -fx-padding: 0;
-    -fx-font-size: 18px;
-    -fx-text-fill: #313338;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
 }
-#uploadButton:hover {
-    -fx-background-color: #DBDEE1;
+#uploadButton:hover, #uploadButtonGroup:hover {
+    -fx-background-color: #35373C;
+    -fx-text-fill: #DBDEE1;
 }
 
-/* Dark Containers */
-.dark-bg {
-    -fx-background-color: #313338;
+/* ═══════════════════════════════════════════════════════════════
+   TOGGLE BUTTONS (Mic, Cam, Screen)
+   ═══════════════════════════════════════════════════════════════ */
+.toggle-button {
+    -fx-background-color: #4E5058;
+    -fx-text-fill: #B5BAC1;
+    -fx-background-radius: 4px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent;
+}
+.toggle-button:hover {
+    -fx-background-color: #5B5E66;
+    -fx-text-fill: #DBDEE1;
+}
+.toggle-button:selected {
+    -fx-background-color: #23A559;
+    -fx-text-fill: white;
+}
+.toggle-button:selected:hover {
+    -fx-background-color: #1A8A48;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BACKGROUND CONTAINERS
+   ═══════════════════════════════════════════════════════════════ */
+.server-rail {
+    -fx-background-color: #1E1F22;
 }
 .sidebar-bg {
     -fx-background-color: #2B2D31;
 }
+.dark-bg {
+    -fx-background-color: #313338;
+}
+.elevated-bg {
+    -fx-background-color: #383A40;
+}
+.modal-bg {
+    -fx-background-color: #232428;
+}
+
+/* Legacy class compatibility */
 .server-bg {
     -fx-background-color: #1E1F22;
 }
 
-/* ── Chat Scroll Area ── */
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR SECTION HEADERS
+   ═══════════════════════════════════════════════════════════════ */
+.sidebar-section-header {
+    -fx-text-fill: #80848E;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER BAR
+   ═══════════════════════════════════════════════════════════════ */
+.header-bar {
+    -fx-background-color: #313338;
+    -fx-border-color: transparent transparent #1E1F22 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.header-channel-icon {
+    -fx-text-fill: #80848E;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+.header-channel-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CALL / LIVE BAR
+   ═══════════════════════════════════════════════════════════════ */
+.call-bar {
+    -fx-background-color: #232428;
+    -fx-padding: 6px 16px;
+    -fx-border-color: transparent transparent #1E1F22 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.call-status-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #23A559;
+}
+.live-status-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ED4245;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIDEO AREA
+   ═══════════════════════════════════════════════════════════════ */
+.video-area {
+    -fx-background-color: #000000;
+    -fx-padding: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHAT SCROLL AREA
+   ═══════════════════════════════════════════════════════════════ */
 .chat-scroll-pane {
     -fx-background-color: #313338;
     -fx-border-color: transparent;
@@ -108,61 +292,90 @@
 }
 .chat-box {
     -fx-background-color: #313338;
-    -fx-padding: 8 0 8 0;
+    -fx-padding: 16px 0 8px 0;
+    -fx-spacing: 0;
 }
 
-/* ── Message Row ── */
+/* ═══════════════════════════════════════════════════════════════
+   MESSAGE ROWS
+   ═══════════════════════════════════════════════════════════════ */
 .chat-message-row {
     -fx-background-color: transparent;
+    -fx-padding: 2px 16px;
 }
 .chat-message-row:hover {
     -fx-background-color: #2E3035;
+}
+/* First message in group (shows avatar) */
+.chat-message-group-start {
+    -fx-padding: 12px 16px 2px 16px;
+}
+/* Follow-up compact message (no avatar) */
+.chat-message-compact {
+    -fx-padding: 2px 16px 2px 72px;
 }
 
 .message-sender-name {
     -fx-font-weight: bold;
     -fx-text-fill: #FFFFFF;
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
 }
 .message-timestamp {
     -fx-text-fill: #72767D;
     -fx-font-size: 11px;
 }
-.message-text {
+.message-content {
     -fx-text-fill: #DBDEE1;
     -fx-font-size: 14px;
+    -fx-wrap-text: true;
+    -fx-line-spacing: 2px;
 }
 
-/* ── Image Message ── */
+/* ═══════════════════════════════════════════════════════════════
+   IMAGE MESSAGES
+   ═══════════════════════════════════════════════════════════════ */
 .message-image {
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 6, 0, 0, 2);
     -fx-cursor: hand;
+    -fx-background-radius: 4px;
 }
 
-/* ── File Card ── */
+/* ═══════════════════════════════════════════════════════════════
+   FILE CARDS
+   ═══════════════════════════════════════════════════════════════ */
 .file-card {
     -fx-background-color: #2B2D31;
     -fx-background-radius: 8px;
     -fx-border-color: #3F4147;
     -fx-border-radius: 8px;
     -fx-border-width: 1px;
-    -fx-max-width: 400px;
+    -fx-max-width: 432px;
+    -fx-padding: 10px 12px;
 }
 .file-name-label {
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-max-width: 220px;
+    -fx-font-size: 14px;
+    -fx-max-width: 260px;
+}
+.file-size-label {
+    -fx-text-fill: #87898C;
+    -fx-font-size: 12px;
+}
+.file-icon-label {
+    -fx-font-size: 28px;
 }
 
-/* ── Download Button ── */
+/* ═══════════════════════════════════════════════════════════════
+   DOWNLOAD / ACTION BUTTONS (inside file cards)
+   ═══════════════════════════════════════════════════════════════ */
 .download-btn {
     -fx-background-color: #5865F2;
     -fx-text-fill: white;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-font-weight: bold;
     -fx-background-radius: 4px;
-    -fx-padding: 6px 12px;
+    -fx-padding: 6px 14px;
     -fx-cursor: hand;
 }
 .download-btn:hover {
@@ -171,4 +384,78 @@
 .download-btn:disabled {
     -fx-background-color: #4E5058;
     -fx-text-fill: #87898C;
+    -fx-cursor: default;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INPUT AREA
+   ═══════════════════════════════════════════════════════════════ */
+.input-wrapper {
+    -fx-background-color: #383A40;
+    -fx-background-radius: 8px;
+    -fx-padding: 0 16px;
+}
+.input-area-bg {
+    -fx-background-color: #313338;
+    -fx-padding: 0 16px 24px 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   USER PROFILE BAR (bottom of sidebar)
+   ═══════════════════════════════════════════════════════════════ */
+.user-profile-bar {
+    -fx-background-color: #232428;
+    -fx-padding: 8px 8px;
+    -fx-min-height: 52px;
+    -fx-max-height: 52px;
+}
+.user-profile-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+.user-profile-status {
+    -fx-text-fill: #B5BAC1;
+    -fx-font-size: 11px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WELCOME PANEL
+   ═══════════════════════════════════════════════════════════════ */
+.welcome-panel {
+    -fx-background-color: #313338;
+}
+.welcome-title {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #5865F2;
+}
+.welcome-subtitle {
+    -fx-font-size: 15px;
+    -fx-text-fill: #80848E;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SEPARATOR
+   ═══════════════════════════════════════════════════════════════ */
+.separator .line {
+    -fx-border-color: #3F4147;
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ALERTS / DIALOGS
+   ═══════════════════════════════════════════════════════════════ */
+.dialog-pane {
+    -fx-background-color: #313338;
+}
+.dialog-pane .content {
+    -fx-text-fill: #DBDEE1;
+}
+.dialog-pane .header-panel {
+    -fx-background-color: #2B2D31;
+}
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
 }

@@ -16,6 +16,8 @@ module edu.vku.lancord {
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.annotation;
+    requires jbcrypt;
+    requires webcam.capture;
 
     // ─── Client packages ───────────────────────────────────────────────────────
     exports edu.vku.lancord.client;

@@ -17,6 +17,7 @@ public class UserRepo {
                     User user = new User();
                     user.setId(rs.getInt("id"));
                     user.setUsername(rs.getString("username"));
+                    user.setPasswordHash(rs.getString("password_hash"));
                     user.setCreatedAt(rs.getTimestamp("created_at"));
                     return user;
                 }
@@ -25,15 +26,16 @@ public class UserRepo {
         return null;
     }
 
-    public static User createUser(String username) throws SQLException {
+    public static User createUser(String username, String passwordHash) throws SQLException {
         Connection conn = DatabaseManager.getConnection();
-        String sql = "INSERT INTO users (username) VALUES (?)";
+        String sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, username);
+            stmt.setString(2, passwordHash);
             stmt.executeUpdate();
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return new User(rs.getInt(1), username);
+                    return new User(rs.getInt(1), username, passwordHash);
                 }
             }
         }

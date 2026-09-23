@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -45,7 +46,30 @@
             <TextField fx:id="usernameField" promptText="Enter username" style="-fx-background-color: #1E1F22; -fx-text-fill: #DBDEE1;" />
         </VBox>
 
+        <VBox alignment="CENTER_LEFT" spacing="8.0">
+            <Label text="PASSWORD" textFill="#B5BAC1">
+                <font>
+                    <Font name="System Bold" size="12.0" />
+                </font>
+            </Label>
+            <PasswordField fx:id="passwordField" promptText="Enter password" style="-fx-background-color: #1E1F22; -fx-text-fill: #DBDEE1;" />
+        </VBox>
+
+        <VBox alignment="CENTER_LEFT" spacing="8.0">
+            <Label text="CONFIRM PASSWORD (For Register)" textFill="#B5BAC1">
+                <font>
+                    <Font name="System Bold" size="12.0" />
+                </font>
+            </Label>
+            <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" style="-fx-background-color: #1E1F22; -fx-text-fill: #DBDEE1;" />
+        </VBox>
+
         <Button fx:id="loginButton" mnemonicParsing="false" onAction="#onLoginClick" prefWidth="416.0" text="Log In" styleClass="button">
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </Button>
+        <Button fx:id="registerButton" mnemonicParsing="false" onAction="#onRegisterClick" prefWidth="416.0" text="Register" style="-fx-background-color: #4F545C; -fx-text-fill: white;">
             <VBox.margin>
                 <Insets top="10.0" />
             </VBox.margin>

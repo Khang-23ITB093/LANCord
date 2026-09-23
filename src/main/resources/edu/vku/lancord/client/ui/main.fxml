@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
@@ -9,83 +10,299 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="720.0" prefWidth="1080.0" stylesheets="@discord-theme.css"
-            xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<!-- ROOT — full window -->
+<BorderPane prefHeight="720.0" prefWidth="1080.0"
+            stylesheets="@discord-theme.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="edu.vku.lancord.client.ui.MainController">
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!--  LEFT: Server Rail (72px) + Sidebar (240px)               -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
     <left>
         <HBox BorderPane.alignment="CENTER">
-            <!-- Server List icon -->
-            <VBox alignment="TOP_CENTER" prefWidth="72.0" spacing="10.0" styleClass="server-bg">
-                <padding><Insets bottom="12.0" top="12.0"/></padding>
-                <Button mnemonicParsing="false" prefHeight="48.0" prefWidth="48.0"
-                        style="-fx-background-color: #5865F2; -fx-background-radius: 24; -fx-text-fill: white; -fx-font-size: 18;"
-                        text="LC"/>
-                <VBox prefHeight="2.0" prefWidth="32.0" style="-fx-background-color: #35363C; -fx-background-radius: 1;">
+
+            <!-- Server Rail (72px) -->
+            <VBox fx:id="serverRail" alignment="TOP_CENTER" prefWidth="72.0" minWidth="72.0"
+                  maxWidth="72.0" spacing="8.0" styleClass="server-rail">
+                <padding><Insets top="12.0" bottom="12.0"/></padding>
+
+                <!-- LANCord icon -->
+                <Button mnemonicParsing="false" prefWidth="48.0" prefHeight="48.0"
+                        style="-fx-background-color: #5865F2;
+                               -fx-background-radius: 24;
+                               -fx-text-fill: white;
+                               -fx-font-size: 16;
+                               -fx-font-weight: bold;
+                               -fx-cursor: hand;"
+                        text="LC">
+                </Button>
+
+                <!-- Divider -->
+                <VBox prefHeight="2.0" prefWidth="32.0"
+                      style="-fx-background-color: #35363C; -fx-background-radius: 1;">
                     <VBox.margin><Insets left="20.0" right="20.0"/></VBox.margin>
                 </VBox>
             </VBox>
 
-            <!-- Channels / DMs Sidebar -->
-            <VBox prefWidth="240.0" spacing="10.0" styleClass="sidebar-bg">
-                <padding><Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/></padding>
+            <!-- Sidebar (240px) -->
+            <VBox prefWidth="240.0" minWidth="240.0" maxWidth="240.0"
+                  styleClass="sidebar-bg">
 
-                <Label text="DIRECT MESSAGES" textFill="#949BA4">
-                    <font><Font name="System Bold" size="12.0"/></font>
-                    <VBox.margin><Insets top="10.0"/></VBox.margin>
-                </Label>
-                <ListView fx:id="onlineUsersList" prefHeight="250.0" VBox.vgrow="ALWAYS"/>
+                <!-- Scrollable DM + Group lists -->
+                <ScrollPane VBox.vgrow="ALWAYS" fitToWidth="true"
+                            hbarPolicy="NEVER" vbarPolicy="NEVER"
+                            style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                    <VBox spacing="0" style="-fx-background-color: transparent; -fx-padding: 8 8 8 8;">
 
-                <Label text="GROUPS" textFill="#949BA4">
-                    <font><Font name="System Bold" size="12.0"/></font>
-                </Label>
-                <ListView fx:id="groupsList" prefHeight="120.0"/>
+                        <!-- DIRECT MESSAGES section -->
+                        <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 8 4 8;">
+                            <Label text="DIRECT MESSAGES" styleClass="sidebar-section-header"/>
+                        </HBox>
+                        <ListView fx:id="onlineUsersList" prefHeight="240.0"
+                                  VBox.vgrow="SOMETIMES"/>
 
-                <Label text="CHANNELS" textFill="#949BA4">
-                    <font><Font name="System Bold" size="12.0"/></font>
-                </Label>
-                <ListView fx:id="channelsList" prefHeight="120.0"/>
+                        <!-- GROUPS section -->
+                        <HBox alignment="CENTER_LEFT" style="-fx-padding: 16 8 4 8;">
+                            <Label text="GROUPS" styleClass="sidebar-section-header"/>
+                        </HBox>
+                        <ListView fx:id="groupsList" prefHeight="150.0"
+                                  VBox.vgrow="SOMETIMES"/>
+
+                    </VBox>
+                </ScrollPane>
+
+                <!-- User Profile Bar (pinned bottom, 52px) -->
+                <HBox fx:id="userProfileBar" alignment="CENTER_LEFT" spacing="8.0"
+                      styleClass="user-profile-bar">
+                    <padding><Insets left="8.0" right="4.0" top="8.0" bottom="8.0"/></padding>
+
+                    <!-- Avatar circle -->
+                    <StackPane minWidth="32" minHeight="32" maxWidth="32" maxHeight="32">
+                        <Circle fx:id="userAvatarCircle" radius="16.0"
+                                fill="#5865F2"/>
+                        <Label fx:id="userAvatarLabel" text="?"
+                               style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13;"/>
+                    </StackPane>
+
+                    <!-- Name + status -->
+                    <VBox spacing="0" HBox.hgrow="ALWAYS">
+                        <Label fx:id="userProfileNameLabel" text="..."
+                               styleClass="user-profile-name"/>
+                        <Label fx:id="userProfileStatusLabel" text="Online"
+                               styleClass="user-profile-status"/>
+                    </VBox>
+
+                    <!-- Settings icon button -->
+                    <Button text="⚙" styleClass="btn-ghost"
+                            style="-fx-font-size: 16; -fx-background-color: transparent;
+                                   -fx-text-fill: #B5BAC1; -fx-cursor: hand;"
+                            onAction="#onOpenSettings"/>
+                </HBox>
             </VBox>
         </HBox>
     </left>
 
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!--  CENTER: Layered Panel Stack                               -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
     <center>
-        <VBox styleClass="dark-bg" BorderPane.alignment="CENTER">
-            <!-- Header Bar -->
-            <HBox alignment="CENTER_LEFT" prefHeight="48.0" spacing="15.0"
-                  style="-fx-border-color: transparent transparent #1E1F22 transparent; -fx-border-width: 0 0 1 0;">
-                <padding><Insets left="16.0" right="16.0"/></padding>
-                <Label text="#" textFill="#80848E">
-                    <font><Font name="System Bold" size="24.0"/></font>
-                </Label>
-                <Label fx:id="currentChatLabel" text="general" textFill="WHITE">
-                    <font><Font name="System Bold" size="16.0"/></font>
-                </Label>
-                <HBox HBox.hgrow="ALWAYS"/>
-                <Button fx:id="goLiveButton" disable="true" mnemonicParsing="false" onAction="#onGoLive"
-                        style="-fx-background-color: #23A559; -fx-text-fill: white; -fx-font-weight: bold;"
-                        text="Go Live"/>
-            </HBox>
+        <StackPane BorderPane.alignment="CENTER">
 
-            <!-- Chat Area: ScrollPane + VBox instead of ListView -->
-            <ScrollPane fx:id="chatScrollPane" VBox.vgrow="ALWAYS" fitToWidth="true"
-                        styleClass="chat-scroll-pane" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
-                <VBox fx:id="chatBox" styleClass="chat-box" spacing="2"/>
-            </ScrollPane>
+            <!-- ─── LAYER 0: Welcome Panel (no context selected) ─── -->
+            <VBox fx:id="welcomePanel" alignment="CENTER" spacing="16"
+                  styleClass="welcome-panel">
+                <Label text="Welcome to LANCord" styleClass="welcome-title"/>
+                <Label text="Select a conversation to start chatting 👋"
+                       styleClass="welcome-subtitle"/>
+            </VBox>
 
-            <!-- Input Area -->
-            <HBox alignment="CENTER" prefHeight="68.0" spacing="16.0">
-                <padding><Insets bottom="24.0" left="16.0" right="16.0"/></padding>
-                <HBox alignment="CENTER_LEFT" spacing="10.0"
-                      style="-fx-background-color: #383A40; -fx-background-radius: 8px;" HBox.hgrow="ALWAYS">
-                    <padding><Insets bottom="6.0" left="16.0" right="16.0" top="6.0"/></padding>
-                    <Button fx:id="uploadButton" mnemonicParsing="false" onAction="#onUploadFile" text="+"/>
-                    <TextField fx:id="messageField" onAction="#onSendMessage"
-                               promptText="Message..." style="-fx-background-color: transparent;"
-                               HBox.hgrow="ALWAYS"/>
+            <!-- ─── LAYER 1: DM Chat Panel ─── -->
+            <VBox fx:id="dmPanel" visible="false" managed="false"
+                  style="-fx-background-color: #313338;">
+
+                <!-- DM Header -->
+                <HBox fx:id="dmHeaderBar" alignment="CENTER_LEFT"
+                      prefHeight="48.0" minHeight="48.0" maxHeight="48.0"
+                      spacing="10.0" styleClass="header-bar">
+                    <padding><Insets left="16.0" right="12.0"/></padding>
+
+                    <Label text="\@" styleClass="header-channel-icon"/>
+                    <Label fx:id="dmNameLabel" text="" styleClass="header-channel-name"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <!-- DM call buttons -->
+                    <Button fx:id="btnVoiceCall" text="📞 Voice"
+                            onAction="#onStartVoiceCall"
+                            styleClass="btn-success"
+                            style="-fx-background-color: #23A559; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 4;
+                                   -fx-font-size: 13; -fx-padding: 6 12; -fx-cursor: hand;"/>
+                    <Button fx:id="btnVideoCall" text="🎥 Video"
+                            onAction="#onStartVideoCall"
+                            style="-fx-background-color: #5865F2; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 4;
+                                   -fx-font-size: 13; -fx-padding: 6 12; -fx-cursor: hand;"/>
                 </HBox>
-            </HBox>
-        </VBox>
+
+                <!-- DM Active Call Control Bar (hidden until call started) -->
+                <HBox fx:id="dmCallBar" visible="false" managed="false"
+                      alignment="CENTER_LEFT" spacing="8" styleClass="call-bar"
+                      minHeight="40" maxHeight="40">
+                    <Label text="🔴" style="-fx-font-size: 10;"/>
+                    <Label fx:id="dmCallStatusLabel" text="In Call"
+                           styleClass="call-status-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ToggleButton fx:id="btnMic" text="🎙 Mic"
+                                  onAction="#onBtnMicAction"/>
+                    <ToggleButton fx:id="btnCamera" text="📷 Cam"
+                                  onAction="#onBtnCameraAction"/>
+                    <Button text="✖ End" onAction="#onEndCall"
+                            style="-fx-background-color: #ED4245; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 4;
+                                   -fx-font-size: 12; -fx-padding: 4 10; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- DM Video Preview (hidden until camera on) -->
+                <HBox fx:id="dmVideoBar" visible="false" managed="false"
+                      alignment="CENTER" spacing="10"
+                      style="-fx-background-color: #000000; -fx-padding: 10;">
+                    <ImageView fx:id="remoteVideoView"
+                               fitWidth="480" fitHeight="270" preserveRatio="true"/>
+                    <ImageView fx:id="localVideoPreview"
+                               fitWidth="160" fitHeight="90" preserveRatio="true"/>
+                </HBox>
+
+                <!-- DM Chat Scroll -->
+                <ScrollPane fx:id="dmChatScroll" VBox.vgrow="ALWAYS" fitToWidth="true"
+                            styleClass="chat-scroll-pane"
+                            hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                    <VBox fx:id="dmChatBox" styleClass="chat-box"/>
+                </ScrollPane>
+
+                <!-- DM Input Bar -->
+                <HBox alignment="CENTER" styleClass="input-area-bg"
+                      prefHeight="68.0" minHeight="68.0" maxHeight="68.0">
+                    <padding><Insets bottom="20.0" left="16.0" right="16.0" top="4.0"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="8.0"
+                          styleClass="input-wrapper" HBox.hgrow="ALWAYS"
+                          minHeight="44.0">
+                        <Button fx:id="uploadButton" text="+"
+                                onAction="#onUploadFile"/>
+                        <TextField fx:id="messageField" onAction="#onSendMessage"
+                                   promptText="Message..."
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </HBox>
+            </VBox>
+
+            <!-- ─── LAYER 2: Group / Channel Panel ─── -->
+            <VBox fx:id="groupPanel" visible="false" managed="false"
+                  style="-fx-background-color: #313338;">
+
+                <!-- Group Header -->
+                <HBox fx:id="groupHeaderBar" alignment="CENTER_LEFT"
+                      prefHeight="48.0" minHeight="48.0" maxHeight="48.0"
+                      spacing="10.0" styleClass="header-bar">
+                    <padding><Insets left="16.0" right="12.0"/></padding>
+
+                    <Label text="#" styleClass="header-channel-icon"/>
+                    <Label fx:id="groupNameLabel" text="" styleClass="header-channel-name"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <!-- Go Live button (only in Group context) -->
+                    <Button fx:id="goLiveButton" text="🔴 Go Live"
+                            onAction="#onGoLive"
+                            style="-fx-background-color: #23A559; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 4;
+                                   -fx-font-size: 13; -fx-padding: 6 14; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- Group Live Control Bar (hidden until Go Live) -->
+                <HBox fx:id="groupLiveBar" visible="false" managed="false"
+                      alignment="CENTER_LEFT" spacing="8" styleClass="call-bar"
+                      minHeight="40" maxHeight="40">
+                    <Label text="🔴" style="-fx-font-size: 10;"/>
+                    <Label text="LIVE" styleClass="live-status-label"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <ToggleButton fx:id="btnMicGroup" text="🎙 Mic"
+                                  onAction="#onBtnMicAction"/>
+                    <ToggleButton fx:id="btnCameraGroup" text="📷 Cam"
+                                  onAction="#onBtnCameraAction"/>
+                    <ToggleButton fx:id="btnScreen" text="🖥 Screen"
+                                  onAction="#onBtnScreenAction"/>
+                    <Button text="✖ End" onAction="#onEndCall"
+                            style="-fx-background-color: #ED4245; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-background-radius: 4;
+                                   -fx-font-size: 12; -fx-padding: 4 10; -fx-cursor: hand;"/>
+                </HBox>
+
+                <!-- Group Video Area (hidden until live) -->
+                <VBox fx:id="groupVideoArea" visible="false" managed="false"
+                      spacing="8" styleClass="video-area">
+                    <!-- Self preview still up top -->
+                    <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 10 0 0;">
+                        <ImageView fx:id="localVideoPreviewGroup"
+                                   fitWidth="180" fitHeight="100" preserveRatio="true"/>
+                    </HBox>
+                    <FlowPane fx:id="participantsPane" hgap="10" vgap="10"
+                              alignment="CENTER"/>
+                </VBox>
+
+                <!-- Group Chat Scroll -->
+                <ScrollPane fx:id="groupChatScroll" VBox.vgrow="ALWAYS" fitToWidth="true"
+                            styleClass="chat-scroll-pane"
+                            hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+                    <VBox fx:id="groupChatBox" styleClass="chat-box"/>
+                </ScrollPane>
+
+                <!-- Group Input Bar -->
+                <HBox alignment="CENTER" styleClass="input-area-bg"
+                      prefHeight="68.0" minHeight="68.0" maxHeight="68.0">
+                    <padding><Insets bottom="20.0" left="16.0" right="16.0" top="4.0"/></padding>
+                    <HBox alignment="CENTER_LEFT" spacing="8.0"
+                          styleClass="input-wrapper" HBox.hgrow="ALWAYS"
+                          minHeight="44.0">
+                        <Button fx:id="uploadButtonGroup" text="+"
+                                onAction="#onUploadFile"/>
+                        <TextField fx:id="messageFieldGroup" onAction="#onSendMessage"
+                                   promptText="Message #channel..."
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </HBox>
+            </VBox>
+
+            <!-- ─── LAYER 4: Incoming Call Overlay ─── -->
+            <VBox fx:id="incomingCallOverlay" visible="false" managed="false"
+                  alignment="CENTER" spacing="20"
+                  style="-fx-background-color: rgba(0, 0, 0, 0.85);">
+                
+                <Label fx:id="incomingCallNameText" text="Incoming Call from User"
+                       style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold;"/>
+                
+                <Label text="Ringing..." style="-fx-text-fill: #B5BAC1; -fx-font-size: 16px;"/>
+                
+                <HBox alignment="CENTER" spacing="30">
+                    <Button text="Chấp nhận (Accept)" onAction="#onAcceptCall"
+                            style="-fx-background-color: #23A559; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-font-size: 16px; 
+                                   -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                    <Button text="Từ chối (Reject)" onAction="#onRejectCall"
+                            style="-fx-background-color: #ED4245; -fx-text-fill: white;
+                                   -fx-font-weight: bold; -fx-font-size: 16px; 
+                                   -fx-padding: 12 24; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                </HBox>
+            </VBox>
+
+        </StackPane>
     </center>
+
 </BorderPane>

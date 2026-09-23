@@ -18,6 +18,10 @@ public class ServerManager {
     // E.g. starts at 230.0.0.1, increments the last octet.
     private static int nextMulticastOctet = 1;
     private static final Map<Integer, String> channelMulticastMap = new ConcurrentHashMap<>();
+    private static final Map<Integer, Map<Integer, Byte>> channelSenderIds = new ConcurrentHashMap<>();
+    
+    // Tracks currently active streamers and their usernames for UI mapping: channelId -> {senderId -> username}
+    private static final Map<Integer, Map<Byte, String>> activeStreamersByChannel = new ConcurrentHashMap<>();
 
     public static synchronized boolean registerUser(User user, ClientHandler handler) {
         // Prevent duplicate login
@@ -76,5 +80,38 @@ public class ServerManager {
             channelMulticastMap.put(channelId, ip);
         }
         return channelMulticastMap.get(channelId);
+    }
+
+    public static synchronized byte assignSenderId(int channelId, int userId) {
+        channelSenderIds.putIfAbsent(channelId, new ConcurrentHashMap<>());
+        Map<Integer, Byte> senders = channelSenderIds.get(channelId);
+        if (senders.containsKey(userId)) {
+            return senders.get(userId);
+        }
+        byte newId = (byte) (senders.size() + 1);
+        senders.put(userId, newId);
+        return newId;
+    }
+
+    public static synchronized void addActiveStreamer(int channelId, byte senderId, String username) {
+        activeStreamersByChannel.putIfAbsent(channelId, new ConcurrentHashMap<>());
+        activeStreamersByChannel.get(channelId).put(senderId, username);
+    }
+
+    public static synchronized void removeActiveStreamer(int channelId, byte senderId) {
+        if (activeStreamersByChannel.containsKey(channelId)) {
+            activeStreamersByChannel.get(channelId).remove(senderId);
+            if (activeStreamersByChannel.get(channelId).isEmpty()) {
+                activeStreamersByChannel.remove(channelId);
+            }
+        }
+    }
+
+    public static synchronized Map<Byte, String> getActiveStreamers(int channelId) {
+        return activeStreamersByChannel.getOrDefault(channelId, new ConcurrentHashMap<>());
+    }
+
+    public static synchronized boolean isStreamActive(int channelId) {
+        return activeStreamersByChannel.containsKey(channelId) && !activeStreamersByChannel.get(channelId).isEmpty();
     }
 }

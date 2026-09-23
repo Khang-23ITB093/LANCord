@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClientHandler implements Runnable {
@@ -82,6 +83,9 @@ public class ClientHandler implements Runnable {
                 case LOGIN:
                     handleLogin(payload);
                     break;
+                case REGISTER:
+                    handleRegister(payload);
+                    break;
                 case CREATE_GROUP:
                     handleCreateGroup(payload);
                     break;
@@ -107,6 +111,18 @@ public class ClientHandler implements Runnable {
                 case STREAM_START:
                     handleStreamStart(payload);
                     break;
+                case STREAM_STOP:
+                    handleStreamStop(payload);
+                    break;
+                case CALL_REQUEST:
+                    handleCallRequest(payload);
+                    break;
+                case CALL_ACCEPT:
+                    handleCallAccept(payload);
+                    break;
+                case CALL_REJECT:
+                    handleCallReject(payload);
+                    break;
                 case GET_CHAT_HISTORY:
                     handleGetChatHistory(payload);
                     break;
@@ -124,9 +140,12 @@ public class ClientHandler implements Runnable {
 
     private void handleLogin(JsonNode payload) throws Exception {
         String username = payload.get("username").asText();
+        String password = payload.get("password").asText();
         User u = UserRepo.findByUsername(username);
-        if (u == null) {
-            u = UserRepo.createUser(username);
+        
+        if (u == null || !org.mindrot.jbcrypt.BCrypt.checkpw(password, u.getPasswordHash())) {
+            sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("Invalid username or password")));
+            return;
         }
         
         this.user = u;
@@ -135,6 +154,26 @@ public class ClientHandler implements Runnable {
         } else {
             this.user = null;
             sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("User already online")));
+        }
+    }
+
+    private void handleRegister(JsonNode payload) throws Exception {
+        String username = payload.get("username").asText();
+        String password = payload.get("password").asText();
+        
+        User existingUser = UserRepo.findByUsername(username);
+        if (existingUser != null) {
+            sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("Username already exists")));
+            return;
+        }
+        
+        String passwordHash = org.mindrot.jbcrypt.BCrypt.hashpw(password, org.mindrot.jbcrypt.BCrypt.gensalt());
+        User u = UserRepo.createUser(username, passwordHash);
+        
+        if (u != null) {
+            sendMessage(new Message(MessageType.REGISTER_RESP, JsonUtil.valueToTree(u)));
+        } else {
+            sendMessage(new Message(MessageType.ERROR, JsonUtil.valueToTree("Failed to create user")));
         }
     }
 
@@ -179,8 +218,12 @@ public class ClientHandler implements Runnable {
             // Send back to sender too
             sendMessage(notifyMsg);
         } else {
-            List<Integer> members = GroupRepo.getGroupMembers(receiverId); // receiverId is groupId here
-            ServerManager.sendToUsers(members, notifyMsg);
+            if (receiverId == 1) { // General Channel
+                ServerManager.broadcast(notifyMsg);
+            } else {
+                List<Integer> members = GroupRepo.getGroupMembers(receiverId); // receiverId is groupId here
+                ServerManager.sendToUsers(members, notifyMsg);
+            }
         }
     }
 
@@ -261,16 +304,99 @@ public class ClientHandler implements Runnable {
         
         String ip = ServerManager.getMulticastIpForChannel(channelId);
         int port = 9999;
+        byte senderId = ServerManager.assignSenderId(channelId, user.getId());
         
-        ObjectNode notifyNode = JsonUtil.valueToTree(new Object()).deepCopy();
+        ServerManager.addActiveStreamer(channelId, senderId, user.getUsername());
+        Map<Byte, String> streamers = ServerManager.getActiveStreamers(channelId);
+        
+        ObjectNode notifyNode = JsonUtil.createObjectNode();
         notifyNode.put("channelId", channelId);
         notifyNode.put("groupId", groupId);
         notifyNode.put("multicastIp", ip);
         notifyNode.put("multicastPort", port);
-        notifyNode.put("streamerName", user.getUsername());
+        notifyNode.put("senderId", senderId);
+        notifyNode.set("streamerNames", JsonUtil.valueToTree(streamers));
         
         List<Integer> members = GroupRepo.getGroupMembers(groupId);
+        // Ensure streamer gets notified even if not in members list (though they usually are)
+        if (!members.contains(user.getId())) {
+            members.add(user.getId());
+        }
         ServerManager.sendToUsers(members, new Message(MessageType.STREAM_STARTED, notifyNode));
+    }
+
+    private void handleStreamStop(JsonNode payload) throws Exception {
+        int channelId = payload.get("channelId").asInt();
+        int groupId = payload.get("groupId").asInt();
+        byte senderId = (byte) payload.get("senderId").asInt();
+        String contextType = payload.has("contextType") ? payload.get("contextType").asText() : "GROUP";
+        
+        ServerManager.removeActiveStreamer(channelId, senderId);
+        
+        ObjectNode notifyNode = JsonUtil.createObjectNode();
+        notifyNode.put("channelId", channelId);
+        notifyNode.put("groupId", groupId);
+        notifyNode.put("senderId", senderId);
+        
+        Message msg = new Message(MessageType.STREAM_STOPPED, notifyNode);
+        
+        if ("DM".equals(contextType)) {
+            ServerManager.sendToUser(groupId, msg);
+        } else {
+            if (groupId == 1) { // General Channel
+                ServerManager.broadcast(msg);
+            } else {
+                List<Integer> members = GroupRepo.getGroupMembers(groupId);
+                ServerManager.sendToUsers(members, msg);
+            }
+        }
+    }
+
+    private void handleCallRequest(JsonNode payload) throws Exception {
+        int receiverId = payload.get("receiverId").asInt();
+        
+        ObjectNode notifyNode = JsonUtil.createObjectNode();
+        notifyNode.put("callerId", user.getId());
+        notifyNode.put("callerName", user.getUsername());
+        notifyNode.put("withVideo", payload.has("withVideo") && payload.get("withVideo").asBoolean());
+        
+        ServerManager.sendToUser(receiverId, new Message(MessageType.CALL_INCOMING, notifyNode));
+    }
+
+    private void handleCallAccept(JsonNode payload) throws Exception {
+        int callerId = payload.get("callerId").asInt();
+        int receiverId = user.getId();
+        
+        // We use callerId as the channelId for DMs for simplicity
+        int channelId = callerId;
+        
+        String ip = ServerManager.getMulticastIpForChannel(channelId);
+        int port = 9999;
+        
+        ObjectNode notifyNode = JsonUtil.createObjectNode();
+        notifyNode.put("channelId", channelId);
+        notifyNode.put("groupId", 0);
+        notifyNode.put("multicastIp", ip);
+        notifyNode.put("multicastPort", port);
+        notifyNode.put("streamerName", "DM Call");
+        
+        // Notify Caller
+        notifyNode.put("senderId", ServerManager.assignSenderId(channelId, callerId));
+        ServerManager.sendToUser(callerId, new Message(MessageType.STREAM_STARTED, notifyNode));
+        
+        // Notify Receiver
+        notifyNode.put("senderId", ServerManager.assignSenderId(channelId, receiverId));
+        ServerManager.sendToUser(receiverId, new Message(MessageType.STREAM_STARTED, notifyNode));
+    }
+
+    private void handleCallReject(JsonNode payload) throws Exception {
+        int callerId = payload.get("callerId").asInt();
+        
+        ObjectNode notifyNode = JsonUtil.createObjectNode();
+        notifyNode.put("receiverId", user.getId());
+        notifyNode.put("receiverName", user.getUsername());
+        
+        ServerManager.sendToUser(callerId, new Message(MessageType.CALL_REJECTED, notifyNode));
     }
 
     private void handleGetChatHistory(JsonNode payload) throws Exception {
@@ -284,6 +410,23 @@ public class ClientHandler implements Runnable {
         resp.set("messages", JsonUtil.valueToTree(history));
 
         sendMessage(new Message(MessageType.CHAT_HISTORY_RESP, resp));
+
+        // If it's a GROUP and there's an active stream, notify the user so they can join/see the UI
+        if (type.equals("GROUP") && ServerManager.isStreamActive(contextId)) {
+            String ip = ServerManager.getMulticastIpForChannel(contextId);
+            byte senderId = ServerManager.assignSenderId(contextId, user.getId());
+            Map<Byte, String> streamers = ServerManager.getActiveStreamers(contextId);
+            
+            ObjectNode notifyNode = JsonUtil.createObjectNode();
+            notifyNode.put("channelId", contextId);
+            notifyNode.put("groupId", contextId);
+            notifyNode.put("multicastIp", ip);
+            notifyNode.put("multicastPort", 9999);
+            notifyNode.put("senderId", senderId);
+            notifyNode.set("streamerNames", JsonUtil.valueToTree(streamers));
+            
+            sendMessage(new Message(MessageType.STREAM_STARTED, notifyNode));
+        }
     }
 
     private void handleGetFilesInContext(JsonNode payload) throws Exception {

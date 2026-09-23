@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * Controller for both ChatFileMessage.fxml and ChatVideoMessage.fxml.
@@ -29,17 +30,19 @@ import java.util.Date;
 public class ChatFileMessageController {
 
     @FXML private Circle avatarCircle;
+    @FXML private Label avatarInitial;
     @FXML private Label senderLabel;
     @FXML private Label timestampLabel;
     @FXML private Label fileNameLabel;
     @FXML private Label fileSizeLabel;
-    @FXML private Button downloadButton;
+    @FXML private Label fileIconLabel;
+    @FXML private Button actionButton;
     @FXML private Label statusLabel;
 
     private static final String DOWNLOADS_DIR = "client_downloads/";
     private static final String[] AVATAR_COLORS = {
-        "#5865F2", "#57F287", "#FEE75C", "#EB459E", "#ED4245",
-        "#23A559", "#3BA55C", "#FAA61A"
+        "#5865F2", "#23A559", "#E91E63", "#FF9800",
+        "#9C27B0", "#00BCD4", "#FAA61A", "#3BA55C"
     };
 
     private FileMetadata fileMetadata;
@@ -56,14 +59,36 @@ public class ChatFileMessageController {
         fileSizeLabel.setText(formatSize(meta.getFileSize()));
 
         if (timestamp != null) {
-            timestampLabel.setText(new SimpleDateFormat("HH:mm").format(timestamp));
+            String formatted = new SimpleDateFormat("'Today at' HH:mm").format(timestamp);
+            timestampLabel.setText(formatted);
         }
         int colorIdx = Math.abs(senderName.hashCode()) % AVATAR_COLORS.length;
         avatarCircle.setFill(Color.web(AVATAR_COLORS[colorIdx]));
+        if (avatarInitial != null) {
+            avatarInitial.setText(senderName.substring(0, 1).toUpperCase());
+        }
+
+        // Set File Icon
+        if (fileIconLabel != null) {
+            String ext = getExtension(meta.getOriginalName()).toLowerCase();
+            if (Set.of("png", "jpg", "jpeg", "gif", "bmp", "webp").contains(ext)) {
+                fileIconLabel.setText("🖼");
+            } else if (Set.of("mp4", "avi", "mkv", "mov", "wmv", "flv", "webm").contains(ext)) {
+                fileIconLabel.setText("🎬");
+            } else if (Set.of("mp3", "wav", "m4a", "aac", "ogg", "flac").contains(ext)) {
+                fileIconLabel.setText("🎵");
+            } else if (ext.equals("pdf")) {
+                fileIconLabel.setText("📕");
+            } else if (Set.of("zip", "rar", "7z", "tar", "gz").contains(ext)) {
+                fileIconLabel.setText("🗜");
+            } else {
+                fileIconLabel.setText("📄");
+            }
+        }
 
         // Check local sender path
         if (localSenderPath != null && Files.exists(Paths.get(localSenderPath))) {
-            downloadButton.setText(isVideo ? "Watch" : "Open");
+            actionButton.setText("📂 Mở");
             statusLabel.setText("Already on device");
             return;
         }
@@ -71,13 +96,20 @@ public class ChatFileMessageController {
         // Check if already downloaded
         Path path = Paths.get(DOWNLOADS_DIR, meta.getOriginalName());
         if (Files.exists(path)) {
-            downloadButton.setText(isVideo ? "Watch" : "Open");
+            actionButton.setText("📂 Mở");
             statusLabel.setText("Already downloaded");
+        } else {
+            actionButton.setText("⬇ Tải về");
         }
     }
 
+    private String getExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 ? filename.substring(dot + 1) : "";
+    }
+
     @FXML
-    private void onDownload() {
+    private void onActionClicked() {
         if (fileMetadata == null) return;
 
         // Check local sender path
@@ -93,7 +125,7 @@ public class ChatFileMessageController {
             return;
         }
 
-        downloadButton.setDisable(true);
+        actionButton.setDisable(true);
         statusLabel.setText("Downloading...");
 
         // Register callback for when download response arrives
@@ -109,15 +141,15 @@ public class ChatFileMessageController {
                         fos.write(data);
                     }
                     statusLabel.setText("Saved to " + DOWNLOADS_DIR);
-                    downloadButton.setDisable(false);
-                    downloadButton.setText(isVideo ? "Watch" : "Open");
+                    actionButton.setDisable(false);
+                    actionButton.setText("📂 Mở");
 
                     if (isVideo) {
                         openFile(filePath.toFile());
                     }
                 } catch (Exception e) {
                     statusLabel.setText("Save failed: " + e.getMessage());
-                    downloadButton.setDisable(false);
+                    actionButton.setDisable(false);
                 }
             });
         });
@@ -130,7 +162,7 @@ public class ChatFileMessageController {
         } catch (Exception e) {
             Platform.runLater(() -> {
                 statusLabel.setText("Request failed.");
-                downloadButton.setDisable(false);
+                actionButton.setDisable(false);
             });
         }
     }

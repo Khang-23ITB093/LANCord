@@ -19,8 +19,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class LoginController {
 
     @FXML private TextField usernameField;
+    @FXML private javafx.scene.control.PasswordField passwordField;
+    @FXML private javafx.scene.control.PasswordField confirmPasswordField;
     @FXML private TextField serverIpField;
     @FXML private Button loginButton;
+    @FXML private Button registerButton;
 
     public static TCPConnection connection;
     public static User currentUser;
@@ -34,25 +37,87 @@ public class LoginController {
     @FXML
     public void onLoginClick() {
         String username = usernameField.getText().trim();
+        String password = passwordField.getText().trim();
         String ip = serverIpField.getText().trim();
 
-        if (username.isEmpty() || ip.isEmpty()) return;
+        if (username.isEmpty() || password.isEmpty() || ip.isEmpty()) {
+            showAlert("Validation Error", "Fields cannot be empty.");
+            return;
+        }
 
         loginButton.setDisable(true);
+        registerButton.setDisable(true);
 
         new Thread(() -> {
             try {
-                connection = new TCPConnection();
-                connection.connect(ip, 8888);
-                connection.setOnMessageReceived(this::handleMessage);
+                if (connection == null || !connection.isConnected()) {
+                    connection = new TCPConnection();
+                    connection.connect(ip, 8888);
+                    connection.setOnMessageReceived(this::handleMessage);
+                }
 
-                // Send login message
-                JsonNode payload = JsonUtil.valueToTree(new User(0, username));
+                com.fasterxml.jackson.databind.node.ObjectNode payload = JsonUtil.createObjectNode();
+                payload.put("username", username);
+                payload.put("password", password);
                 connection.sendMessage(new Message(MessageType.LOGIN, payload));
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     showAlert("Connection Error", "Could not connect to server " + ip);
                     loginButton.setDisable(false);
+                    registerButton.setDisable(false);
+                });
+            }
+        }).start();
+    }
+
+    @FXML
+    public void onRegisterClick() {
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText().trim();
+        String ip = serverIpField.getText().trim();
+
+        String confirmPassword = confirmPasswordField.getText().trim();
+
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || ip.isEmpty()) {
+            showAlert("Validation Error", "Fields cannot be empty.");
+            return;
+        }
+
+        if (username.length() < 3 || username.contains(" ")) {
+            showAlert("Validation Error", "Username must be at least 3 characters and contain no spaces.");
+            return;
+        }
+
+        if (password.length() < 6) {
+            showAlert("Validation Error", "Password must be at least 6 characters.");
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            showAlert("Validation Error", "Passwords do not match.");
+            return;
+        }
+
+        loginButton.setDisable(true);
+        registerButton.setDisable(true);
+
+        new Thread(() -> {
+            try {
+                if (connection == null || !connection.isConnected()) {
+                    connection = new TCPConnection();
+                    connection.connect(ip, 8888);
+                    connection.setOnMessageReceived(this::handleMessage);
+                }
+
+                com.fasterxml.jackson.databind.node.ObjectNode payload = JsonUtil.createObjectNode();
+                payload.put("username", username);
+                payload.put("password", password);
+                connection.sendMessage(new Message(MessageType.REGISTER, payload));
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showAlert("Connection Error", "Could not connect to server " + ip);
+                    loginButton.setDisable(false);
+                    registerButton.setDisable(false);
                 });
             }
         }).start();
@@ -64,10 +129,15 @@ public class LoginController {
                 if (msg.getType() == MessageType.LOGIN_RESP) {
                     currentUser = JsonUtil.treeToValue(msg.getPayload(), User.class);
                     ClientMain.switchScene("main.fxml", "LANCord - " + currentUser.getUsername());
-                } else if (msg.getType() == MessageType.ERROR) {
-                    showAlert("Login Error", msg.getPayload().asText());
+                } else if (msg.getType() == MessageType.REGISTER_RESP) {
+                    showAlert("Success", "Registered successfully! You can now log in.");
                     loginButton.setDisable(false);
-                    connection.close();
+                    registerButton.setDisable(false);
+                } else if (msg.getType() == MessageType.ERROR) {
+                    showAlert("Error", msg.getPayload().asText());
+                    loginButton.setDisable(false);
+                    registerButton.setDisable(false);
+                    if (connection != null) connection.close();
                 } else {
                     pendingMessages.add(msg);
                 }
