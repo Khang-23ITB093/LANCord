@@ -253,16 +253,19 @@ public class MainController {
     }
 
     private void syncVideoUIVisibility() {
-        boolean camActive = (webcamCapture != null);
+        boolean isLocalCapturing = (webcamCapture != null) || (screenCapture != null);
+        boolean isRemoteDMVisible = (remoteVideoView.getImage() != null);
+        boolean isRemoteGroupVisible = !activeVideoFeeds.isEmpty();
+
         if (activeCallType == null) {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
         } else if (activeCallType.equals("DM") && activeCallId == currentContextId && currentContextType.equals("DM")) {
-            // Only show video bar if camera is actively capturing
-            setNodeVisible(dmVideoBar, camActive);
+            // Show video bar if local camera is actively capturing OR we are receiving a remote video frame
+            setNodeVisible(dmVideoBar, isLocalCapturing || isRemoteDMVisible);
         } else if (activeCallType.equals("GROUP") && activeCallId == currentContextId && currentContextType.equals("GROUP")) {
-            // Video area shown only if cam or screen is active
-            setNodeVisible(groupVideoArea, camActive || screenCapture != null);
+            // Video area shown if cam or screen is active OR we are watching others
+            setNodeVisible(groupVideoArea, isLocalCapturing || isRemoteGroupVisible);
         } else {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
@@ -878,6 +881,7 @@ public class MainController {
         
         activeVideoFeeds.clear();
         if (participantsPane != null) { participantsPane.getChildren().clear(); }
+        if (remoteVideoView != null) { remoteVideoView.setImage(null); }
     }
 
     // ═══════════════════════════════════════════════════════════════
