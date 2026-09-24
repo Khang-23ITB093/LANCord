@@ -682,11 +682,17 @@ public class MainController {
 
     @FXML
     public void onGoLive() {
-        if (!currentContextType.equals("GROUP")) return;
+        // Allow Go Live if currently viewing the group context OR if already in a GROUP call as a viewer
+        boolean inGroupContext = currentContextType.equals("GROUP");
+        boolean inGroupCallAsViewer = inCall && "GROUP".equals(activeCallType) &&
+                                      (currentStreamSender == null || currentStreamSender.getSenderId() == 0);
+        if (!inGroupContext && !inGroupCallAsViewer) return;
+
+        int groupIdToUse = inGroupCallAsViewer ? activeCallId : currentContextId;
         try {
             ObjectNode payload = JsonUtil.createObjectNode();
-            payload.put("channelId", currentContextId);
-            payload.put("groupId", currentContextId);
+            payload.put("channelId", groupIdToUse);
+            payload.put("groupId", groupIdToUse);
             LoginController.connection.sendMessage(new Message(MessageType.STREAM_START, payload));
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -701,7 +707,14 @@ public class MainController {
         int groupId = payload.has("groupId") ? payload.get("groupId").asInt() : 0;
         int channelId = payload.has("channelId") ? payload.get("channelId").asInt() : 0;
         String intendedCallType = (groupId == 0) ? "DM" : "GROUP";
-        int intendedCallId = (groupId == 0) ? channelId : groupId;
+        // For DM: intendedCallId = the OTHER person's userId so both sides can match their currentContextId
+        // The server puts `otherUserId` = the person on the other end of the call.
+        int intendedCallId;
+        if (intendedCallType.equals("DM")) {
+            intendedCallId = payload.has("otherUserId") ? payload.get("otherUserId").asInt() : channelId;
+        } else {
+            intendedCallId = groupId;
+        }
 
         if (inCall) {
             if (currentStreamSender != null && currentStreamSender.getIp().equals(ip)) {

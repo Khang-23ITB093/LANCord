@@ -379,21 +379,28 @@ public class ClientHandler implements Runnable {
         
         String ip = ServerManager.getMulticastIpForChannel(channelId);
         int port = 9999;
-        
-        ObjectNode notifyNode = JsonUtil.createObjectNode();
-        notifyNode.put("channelId", channelId);
-        notifyNode.put("groupId", 0);
-        notifyNode.put("multicastIp", ip);
-        notifyNode.put("multicastPort", port);
-        notifyNode.put("streamerName", "DM Call");
-        
-        // Notify Caller
-        notifyNode.put("senderId", ServerManager.assignSenderId(channelId, callerId));
-        ServerManager.sendToUser(callerId, new Message(MessageType.STREAM_STARTED, notifyNode));
-        
-        // Notify Receiver
-        notifyNode.put("senderId", ServerManager.assignSenderId(channelId, receiverId));
-        ServerManager.sendToUser(receiverId, new Message(MessageType.STREAM_STARTED, notifyNode));
+
+        // Notify Caller – their own separate payload with their userId
+        ObjectNode callerNode = JsonUtil.createObjectNode();
+        callerNode.put("channelId", channelId);
+        callerNode.put("groupId", 0);           // 0 = DM
+        callerNode.put("multicastIp", ip);
+        callerNode.put("multicastPort", port);
+        callerNode.put("senderId", ServerManager.assignSenderId(channelId, callerId));
+        callerNode.put("userId", callerId);     // tells client this stream session belongs to callerId
+        callerNode.put("otherUserId", receiverId); // the other person in the call
+        ServerManager.sendToUser(callerId, new Message(MessageType.STREAM_STARTED, callerNode));
+
+        // Notify Receiver – separate payload with receiver's userId
+        ObjectNode receiverNode = JsonUtil.createObjectNode();
+        receiverNode.put("channelId", channelId);
+        receiverNode.put("groupId", 0);         // 0 = DM
+        receiverNode.put("multicastIp", ip);
+        receiverNode.put("multicastPort", port);
+        receiverNode.put("senderId", ServerManager.assignSenderId(channelId, receiverId));
+        receiverNode.put("userId", receiverId);  // tells client this stream session belongs to receiverId
+        receiverNode.put("otherUserId", callerId); // the other person in the call
+        ServerManager.sendToUser(receiverId, new Message(MessageType.STREAM_STARTED, receiverNode));
     }
 
     private void handleCallReject(JsonNode payload) throws Exception {
@@ -430,6 +437,7 @@ public class ClientHandler implements Runnable {
             notifyNode.put("multicastIp", ip);
             notifyNode.put("multicastPort", 9999);
             notifyNode.put("senderId", senderId);
+            notifyNode.put("userId", -1); // -1 = join-existing-stream event; client joins as viewer only
             notifyNode.set("streamerNames", JsonUtil.valueToTree(streamers));
             
             sendMessage(new Message(MessageType.STREAM_STARTED, notifyNode));
