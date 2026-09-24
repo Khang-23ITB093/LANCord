@@ -12,7 +12,7 @@ public class UDPStreamSender {
     private final MulticastSocket socket;
     private final InetAddress group;
     private final int port;
-    private final byte senderId;
+    private byte senderId;
     private final AtomicInteger seqIdCounter = new AtomicInteger(0);
 
     public UDPStreamSender(String multicastIp, int port, byte senderId) throws IOException {
@@ -31,6 +31,10 @@ public class UDPStreamSender {
         return this.senderId;
     }
 
+    public void setSenderId(byte senderId) {
+        this.senderId = senderId;
+    }
+
     public void sendAudio(byte[] pcmData) throws IOException {
         sendFragmented(UDPHeader.MEDIA_AUDIO, pcmData, false);
     }
@@ -44,6 +48,10 @@ public class UDPStreamSender {
     }
 
     private void sendFragmented(byte mediaType, byte[] data, boolean isKeyframe) throws IOException {
+        if (senderId == 0) {
+            // Cannot send if we haven't been assigned a senderId by the server
+            return;
+        }
         int totalFrags = (int) Math.ceil((double) data.length / MAX_PAYLOAD);
         short seqId    = (short) (seqIdCounter.getAndIncrement() & 0xFFFF);
 

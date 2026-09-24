@@ -696,6 +696,7 @@ public class MainController {
         String ip     = payload.get("multicastIp").asText();
         int    port   = payload.get("multicastPort").asInt();
         byte senderId = (byte) payload.get("senderId").asInt();
+        int streamUserId = payload.has("userId") ? payload.get("userId").asInt() : -1;
         
         int groupId = payload.has("groupId") ? payload.get("groupId").asInt() : 0;
         int channelId = payload.has("channelId") ? payload.get("channelId").asInt() : 0;
@@ -709,6 +710,12 @@ public class MainController {
                     currentStreamerNames.clear();
                     payload.get("streamerNames").fields().forEachRemaining(entry -> {
                         currentStreamerNames.put(Byte.parseByte(entry.getKey()), entry.getValue().asText());
+                    });
+                }
+                if (streamUserId == LoginController.currentUser.getId()) {
+                    currentStreamSender.setSenderId(senderId);
+                    Platform.runLater(() -> {
+                        activeChatBox().getChildren().add(buildTextMessage("System", "🔴 You went Live!", new Date()));
                     });
                 }
                 syncVideoUIVisibility();
@@ -726,7 +733,8 @@ public class MainController {
         stopAllMedia();
         try {
             audioPlayback = new AudioPlaybackRenderer();
-            currentStreamSender   = new UDPStreamSender(ip, port, senderId);
+            byte initialSenderId = (streamUserId == LoginController.currentUser.getId()) ? senderId : 0;
+            currentStreamSender   = new UDPStreamSender(ip, port, initialSenderId);
             currentStreamReceiver = new UDPStreamReceiver(ip, port, this::onMediaReceived);
             currentStreamReceiver.start();
             inCall = true;
@@ -737,12 +745,23 @@ public class MainController {
             if (currentContextType.equals(intendedCallType) && currentContextId == intendedCallId) {
                 if (intendedCallType.equals("DM")) {
                     showDMCallBar(true);
-                    activeChatBox().getChildren().add(
-                        buildTextMessage("System", "📞 Call connected!", new Date()));
+                    Platform.runLater(() -> {
+                        if (dmCallStatusLabel != null) {
+                            dmCallStatusLabel.setText("In call with " + dmNameLabel.getText());
+                        }
+                        activeChatBox().getChildren().add(
+                            buildTextMessage("System", "📞 Call connected with " + dmNameLabel.getText() + "!", new Date()));
+                    });
                 } else {
                     showGroupLiveBar(true);
-                    activeChatBox().getChildren().add(
-                        buildTextMessage("System", "🔴 Live stream active!", new Date()));
+                    if (initialSenderId != 0) {
+                        activeChatBox().getChildren().add(
+                            buildTextMessage("System", "🔴 You went Live!", new Date()));
+                    } else {
+                        String streamer = currentStreamerNames.getOrDefault(senderId, "Someone");
+                        activeChatBox().getChildren().add(
+                            buildTextMessage("System", "🔴 " + streamer + " started a live stream!", new Date()));
+                    }
                 }
             } else {
                 // Not in the same context, notify them
@@ -766,10 +785,12 @@ public class MainController {
         
         if (iv != null) {
             // Find its parent StackPane and remove it
-            participantsPane.getChildren().removeIf(node -> 
-                node instanceof javafx.scene.layout.StackPane && 
-                ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
-            );
+            Platform.runLater(() -> {
+                participantsPane.getChildren().removeIf(node -> 
+                    node instanceof javafx.scene.layout.StackPane && 
+                    ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
+                );
+            });
         }
 
         Platform.runLater(() -> {
@@ -781,6 +802,7 @@ public class MainController {
                     onEndCall();
                 }
             }
+            syncVideoUIVisibility();
         });
     }
 
@@ -867,14 +889,18 @@ public class MainController {
     @FXML
     public void onEndCall() {
         if (inCall && activeCallType != null) {
-            try {
-                ObjectNode payload = JsonUtil.createObjectNode();
-                payload.put("contextType", activeCallType);
-                payload.put("channelId", activeCallId);
-                payload.put("groupId", activeCallId);
-                payload.put("senderId", currentStreamSender != null ? currentStreamSender.getSenderId() : -1); 
-                LoginController.connection.sendMessage(new Message(MessageType.STREAM_STOP, payload));
-            } catch (Exception e) { e.printStackTrace(); }
+            byte mySenderId = currentStreamSender != null ? currentStreamSender.getSenderId() : -1;
+            // Only notify the server to stop stream if we actually went live (senderId != 0)
+            if (mySenderId != 0) {
+                try {
+                    ObjectNode payload = JsonUtil.createObjectNode();
+                    payload.put("contextType", activeCallType);
+                    payload.put("channelId", activeCallId);
+                    payload.put("groupId", activeCallId);
+                    payload.put("senderId", mySenderId); 
+                    LoginController.connection.sendMessage(new Message(MessageType.STREAM_STOP, payload));
+                } catch (Exception e) { e.printStackTrace(); }
+            }
         }
 
         stopAllMedia();
