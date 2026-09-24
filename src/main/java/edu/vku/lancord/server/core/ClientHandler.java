@@ -315,6 +315,7 @@ public class ClientHandler implements Runnable {
         notifyNode.put("multicastIp", ip);
         notifyNode.put("multicastPort", port);
         notifyNode.put("senderId", senderId);
+        notifyNode.put("userId", user.getId());
         notifyNode.set("streamerNames", JsonUtil.valueToTree(streamers));
         
         List<Integer> members = GroupRepo.getGroupMembers(groupId);
