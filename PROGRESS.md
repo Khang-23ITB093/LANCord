@@ -98,8 +98,7 @@ Tài liệu này theo dõi tiến độ thực tế của dự án LANCord.
 - Unread message badge trên sidebar.
 
 ### Lỗi còn tồn đọng (Cần fix ở phiên sau)
-- **Kẹt đèn camera:** Nếu vừa gọi bật camera rồi đóng gọi ngay thì camera vẫn hoạt động dù đã tắt gọi.
-- **Lỗi UI người xem khi tắt Live:** Khi tắt gọi hay live bên người dùng khác giao diện cũng không update đã tắt live đó mà giữ lại hình ảnh cuối cùng.
+- Không có lỗi nghiêm trọng nào được ghi nhận.
 
 ---
-*Cập nhật: 2026-09-24 01:25 — Đã fix lỗi chat real-time General, fix lỗi hiển thị chéo frame video, handle chuẩn xác STREAM_STOP cho cả DM và Group, đóng an toàn SocketCapture thread (SocketException).*
+*Cập nhật: 2026-09-24 11:55 — Đã fix lỗi kẹt camera do Thread không nhả resource và lỗi hiển thị giữ frame hình người xem khi luồng Live bị tắt đột ngột.*

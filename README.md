@@ -50,9 +50,8 @@ LANCord là một ứng dụng nhắn tin và chia sẻ màn hình theo mô hìn
   - Giao diện Discord-like (Dark theme, 3-layer architecture).
   - Tích hợp tính năng Calling Bar, Group Live Bar.
 
-### 🚧 Lỗi Đang Khắc Phục (Sẽ xử lý trong phiên tới)
-1. **Lỗi Webcam/Camera kẹt trạng thái**: Bật rồi tắt nhanh khiến phần cứng camera vẫn tiếp tục hoạt động ngầm.
-2. **Lỗi UI người xem khi tắt Live**: Màn hình của người xem không ẩn ngay lập tức khi Streamer tắt Live mà kẹt lại frame cuối cùng.
+### 🚧 Lỗi Đang Khắc Phục
+- Không có lỗi nghiêm trọng nào được ghi nhận.
 
 ### 🚧 Backlog / Đang Phát Triển
 1. **Quản lý Nhóm và Kênh**: Tạo nhóm, mời người, phân quyền, phân kênh theo dạng Tree (Discord-like).
