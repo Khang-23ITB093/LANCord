@@ -253,13 +253,16 @@ public class MainController {
     }
 
     private void syncVideoUIVisibility() {
+        boolean camActive = (webcamCapture != null);
         if (activeCallType == null) {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
         } else if (activeCallType.equals("DM") && activeCallId == currentContextId && currentContextType.equals("DM")) {
-            setNodeVisible(dmVideoBar, true);
+            // Only show video bar if camera is actively capturing
+            setNodeVisible(dmVideoBar, camActive);
         } else if (activeCallType.equals("GROUP") && activeCallId == currentContextId && currentContextType.equals("GROUP")) {
-            setNodeVisible(groupVideoArea, true);
+            // Video area shown only if cam or screen is active
+            setNodeVisible(groupVideoArea, camActive || screenCapture != null);
         } else {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
@@ -749,6 +752,17 @@ public class MainController {
                 ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
             );
         }
+
+        Platform.runLater(() -> {
+            if ("DM".equals(activeCallType)) {
+                remoteVideoView.setImage(null);
+                onEndCall();
+            } else if ("GROUP".equals(activeCallType)) {
+                if (activeVideoFeeds.isEmpty() && currentStreamSender == null) {
+                    onEndCall();
+                }
+            }
+        });
     }
 
     // ── Media received from UDP multicast ──────────────────────────────────
@@ -824,9 +838,6 @@ public class MainController {
             FadeTransition ft = new FadeTransition(Duration.millis(200), groupLiveBar);
             ft.setFromValue(0); ft.setToValue(1);
             new ParallelTransition(tt, ft).play();
-            
-            // Show video area by default when live
-            setNodeVisible(groupVideoArea, true);
         } else {
             setNodeVisible(groupLiveBar, false);
             setNodeVisible(groupVideoArea, false);
@@ -896,19 +907,14 @@ public class MainController {
                 btnScreen.setSelected(false);
                 if (screenCapture != null) { screenCapture.stopCapture(); screenCapture = null; }
             }
-
             if (currentStreamSender != null) {
                 webcamCapture = new WebcamCaptureThread(currentStreamSender);
                 webcamCapture.start();
-                if (currentContextType.equals("DM")) {
-                    setNodeVisible(dmVideoBar, true);
-                } else {
-                    setNodeVisible(groupVideoArea, true);
-                }
             }
         } else {
             if (webcamCapture != null) { webcamCapture.stopCapture(); webcamCapture = null; }
         }
+        syncVideoUIVisibility();
     }
 
     @FXML
@@ -935,11 +941,6 @@ public class MainController {
                     try {
                         screenCapture = new ScreenCaptureThread(currentStreamSender);
                         screenCapture.start();
-                        if (currentContextType.equals("DM")) {
-                            setNodeVisible(dmVideoBar, true);
-                        } else {
-                            setNodeVisible(groupVideoArea, true);
-                        }
                     } catch (java.awt.AWTException e) {
                         e.printStackTrace();
                         btnScreen.setSelected(false);
@@ -947,9 +948,11 @@ public class MainController {
                 } else {
                     btnScreen.setSelected(false);
                 }
+                syncVideoUIVisibility();
             });
         } else {
             if (screenCapture != null) { screenCapture.stopCapture(); screenCapture = null; }
+            syncVideoUIVisibility();
         }
     }
 
