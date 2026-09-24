@@ -42,3 +42,6 @@ AGENTS.md
 client_downloads/
 
 server_storage/
+
+out/
+dependency-reduced-pom.xml
