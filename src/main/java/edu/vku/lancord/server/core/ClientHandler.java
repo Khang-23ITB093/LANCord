@@ -322,7 +322,13 @@ public class ClientHandler implements Runnable {
         if (!members.contains(user.getId())) {
             members.add(user.getId());
         }
-        ServerManager.sendToUsers(members, new Message(MessageType.STREAM_STARTED, notifyNode));
+        
+        Message startMsg = new Message(MessageType.STREAM_STARTED, notifyNode);
+        if (groupId == 1) { // General Channel
+            ServerManager.broadcast(startMsg);
+        } else {
+            ServerManager.sendToUsers(members, startMsg);
+        }
     }
 
     private void handleStreamStop(JsonNode payload) throws Exception {

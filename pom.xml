@@ -83,6 +83,12 @@
             <artifactId>bridj</artifactId>
             <version>0.7.0</version>
         </dependency>
+        <!-- SLF4J NOP to suppress warning from webcam-capture -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.36</version>
+        </dependency>
     </dependencies>
 
     <build>

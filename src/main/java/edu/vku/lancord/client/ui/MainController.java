@@ -696,14 +696,22 @@ public class MainController {
         String ip     = payload.get("multicastIp").asText();
         int    port   = payload.get("multicastPort").asInt();
         byte senderId = (byte) payload.get("senderId").asInt();
+        
+        int groupId = payload.has("groupId") ? payload.get("groupId").asInt() : 0;
+        int channelId = payload.has("channelId") ? payload.get("channelId").asInt() : 0;
+        String intendedCallType = (groupId == 0) ? "DM" : "GROUP";
+        int intendedCallId = (groupId == 0) ? channelId : groupId;
 
-        if (inCall && currentStreamSender != null && currentStreamSender.getIp().equals(ip)) {
-            // Already in this group's call, update names and do not interrupt!
-            if (payload.has("streamerNames")) {
-                currentStreamerNames.clear();
-                payload.get("streamerNames").fields().forEachRemaining(entry -> {
-                    currentStreamerNames.put(Byte.parseByte(entry.getKey()), entry.getValue().asText());
-                });
+        if (inCall) {
+            if (currentStreamSender != null && currentStreamSender.getIp().equals(ip)) {
+                // Already in this group's call, update names and do not interrupt!
+                if (payload.has("streamerNames")) {
+                    currentStreamerNames.clear();
+                    payload.get("streamerNames").fields().forEachRemaining(entry -> {
+                        currentStreamerNames.put(Byte.parseByte(entry.getKey()), entry.getValue().asText());
+                    });
+                }
+                syncVideoUIVisibility();
             }
             return;
         }
@@ -722,19 +730,27 @@ public class MainController {
             currentStreamReceiver = new UDPStreamReceiver(ip, port, this::onMediaReceived);
             currentStreamReceiver.start();
             inCall = true;
-            activeCallType = currentContextType;
-            activeCallId   = currentContextId;
+            activeCallType = intendedCallType;
+            activeCallId   = intendedCallId;
 
-            // Show the appropriate call UI layer
-            if (currentContextType.equals("DM")) {
-                showDMCallBar(true);
-                activeChatBox().getChildren().add(
-                    buildTextMessage("System", "📞 Call started!", new Date()));
+            // Show the appropriate call UI layer if the user is currently viewing that context
+            if (currentContextType.equals(intendedCallType) && currentContextId == intendedCallId) {
+                if (intendedCallType.equals("DM")) {
+                    showDMCallBar(true);
+                    activeChatBox().getChildren().add(
+                        buildTextMessage("System", "📞 Call connected!", new Date()));
+                } else {
+                    showGroupLiveBar(true);
+                    activeChatBox().getChildren().add(
+                        buildTextMessage("System", "🔴 Live stream active!", new Date()));
+                }
             } else {
-                showGroupLiveBar(true);
+                // Not in the same context, notify them
+                String contextName = intendedCallType.equals("DM") ? "a user" : "a group";
                 activeChatBox().getChildren().add(
-                    buildTextMessage("System", "🔴 You went Live!", new Date()));
+                        buildTextMessage("System", "🔴 A live stream started in " + contextName + ".", new Date()));
             }
+            syncVideoUIVisibility();
         } catch (Exception e) {
             e.printStackTrace();
             showAlert("Streaming Error", "Failed to start streaming: " + e.getMessage());
