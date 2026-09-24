@@ -12,7 +12,7 @@ public class UDPStreamSender {
     private final MulticastSocket socket;
     private final InetAddress group;
     private final int port;
-    private byte senderId;
+    private volatile byte senderId;
     private final AtomicInteger seqIdCounter = new AtomicInteger(0);
 
     public UDPStreamSender(String multicastIp, int port, byte senderId) throws IOException {

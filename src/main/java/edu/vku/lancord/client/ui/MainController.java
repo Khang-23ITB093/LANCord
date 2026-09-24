@@ -730,6 +730,11 @@ public class MainController {
                     Platform.runLater(() -> {
                         activeChatBox().getChildren().add(buildTextMessage("System", "🔴 You went Live!", new Date()));
                     });
+                } else if (streamUserId > 0) {
+                    String streamer = currentStreamerNames.getOrDefault(senderId, "Someone");
+                    Platform.runLater(() -> {
+                        activeChatBox().getChildren().add(buildTextMessage("System", "🔴 " + streamer + " is now Live!", new Date()));
+                    });
                 }
                 syncVideoUIVisibility();
             }
@@ -811,7 +816,8 @@ public class MainController {
                 remoteVideoView.setImage(null);
                 onEndCall();
             } else if ("GROUP".equals(activeCallType)) {
-                if (activeVideoFeeds.isEmpty() && currentStreamSender == null) {
+                if (currentStreamerNames.isEmpty() && 
+                    (currentStreamSender == null || currentStreamSender.getSenderId() == 0)) {
                     onEndCall();
                 }
             }
@@ -949,6 +955,12 @@ public class MainController {
         boolean selected = (currentContextType.equals("DM") ? btnMic : btnMicGroup).isSelected();
         if (selected) {
             if (currentStreamSender != null) {
+                // Auto-upgrade: if we're a GROUP viewer (senderId=0), go live first.
+                // The AudioCaptureThread will keep looping; once the server assigns a real senderId,
+                // sendFragmented() will stop blocking and packets will flow through.
+                if ("GROUP".equals(activeCallType) && currentStreamSender.getSenderId() == 0) {
+                    onGoLive();
+                }
                 audioCapture = new AudioCaptureThread(currentStreamSender);
                 audioCapture.start();
             }
@@ -967,6 +979,10 @@ public class MainController {
                 if (screenCapture != null) { screenCapture.stopCapture(); screenCapture = null; }
             }
             if (currentStreamSender != null) {
+                // Auto-upgrade: if we're a GROUP viewer (senderId=0), go live first.
+                if ("GROUP".equals(activeCallType) && currentStreamSender.getSenderId() == 0) {
+                    onGoLive();
+                }
                 webcamCapture = new WebcamCaptureThread(currentStreamSender);
                 webcamCapture.start();
             }
@@ -995,6 +1011,11 @@ public class MainController {
                         if (currentContextType.equals("DM")) btnCamera.setSelected(false);
                         else btnCameraGroup.setSelected(false);
                         if (webcamCapture != null) { webcamCapture.stopCapture(); webcamCapture = null; }
+                    }
+
+                    // Auto-upgrade: if we're a GROUP viewer (senderId=0), go live first.
+                    if ("GROUP".equals(activeCallType) && currentStreamSender.getSenderId() == 0) {
+                        onGoLive();
                     }
 
                     try {
