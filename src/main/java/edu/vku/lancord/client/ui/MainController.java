@@ -66,8 +66,8 @@ public class MainController {
     @FXML private Label dmCallStatusLabel;
     @FXML private ToggleButton btnMic;
     @FXML private ToggleButton btnCamera;
-    @FXML private HBox dmVideoBar;
-    @FXML private ImageView remoteVideoView;
+    @FXML private VBox dmVideoBar;
+    @FXML private FlowPane dmParticipantsPane;
     @FXML private ImageView localVideoPreview;
     @FXML private ScrollPane dmChatScroll;
     @FXML private VBox dmChatBox;
@@ -261,8 +261,7 @@ public class MainController {
 
     private void syncVideoUIVisibility() {
         boolean isLocalCapturing = (webcamCapture != null) || (screenCapture != null);
-        boolean isRemoteDMVisible = (remoteVideoView.getImage() != null);
-        boolean isRemoteGroupVisible = !activeVideoFeeds.isEmpty();
+        boolean isRemoteVisible = !activeVideoFeeds.isEmpty();
 
         if (activeCallType == null) {
             setNodeVisible(dmVideoBar, false);
@@ -271,12 +270,12 @@ public class MainController {
             showGroupLiveBar(false);
         } else if (activeCallType.equals("DM") && activeCallId == currentContextId && currentContextType.equals("DM")) {
             // Show video bar if local camera is actively capturing OR we are receiving a remote video frame
-            setNodeVisible(dmVideoBar, isLocalCapturing || isRemoteDMVisible);
+            setNodeVisible(dmVideoBar, isLocalCapturing || isRemoteVisible);
             showDMCallBar(true);
             showGroupLiveBar(false);
         } else if (activeCallType.equals("GROUP") && activeCallId == currentContextId && currentContextType.equals("GROUP")) {
             // Video area shown if cam or screen is active OR we are watching others
-            setNodeVisible(groupVideoArea, isLocalCapturing || isRemoteGroupVisible);
+            setNodeVisible(groupVideoArea, isLocalCapturing || isRemoteVisible);
             showDMCallBar(false);
             showGroupLiveBar(true);
         } else {
@@ -851,17 +850,27 @@ public class MainController {
         if (iv != null) {
             // Find its parent StackPane and remove it
             Platform.runLater(() -> {
-                participantsPane.getChildren().removeIf(node -> 
-                    node instanceof javafx.scene.layout.StackPane && 
-                    ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
-                );
+                if (participantsPane != null) {
+                    participantsPane.getChildren().removeIf(node -> 
+                        node instanceof javafx.scene.layout.StackPane && 
+                        ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
+                    );
+                }
+                if (dmParticipantsPane != null) {
+                    dmParticipantsPane.getChildren().removeIf(node -> 
+                        node instanceof javafx.scene.layout.StackPane && 
+                        ((javafx.scene.layout.StackPane) node).getChildren().contains(iv)
+                    );
+                }
             });
         }
 
         Platform.runLater(() -> {
             if ("DM".equals(activeCallType)) {
-                remoteVideoView.setImage(null);
-                onEndCall();
+                if (currentStreamerNames.isEmpty() && 
+                    (currentStreamSender == null || currentStreamSender.getSenderId() == 0)) {
+                    onEndCall();
+                }
             } else if ("GROUP".equals(activeCallType)) {
                 if (currentStreamerNames.isEmpty() && 
                     (currentStreamSender == null || currentStreamSender.getSenderId() == 0)) {
@@ -886,10 +895,8 @@ public class MainController {
                         javafx.scene.image.WritableImage fxImg =
                             javafx.embed.swing.SwingFXUtils.toFXImage(bImg, null);
                         Platform.runLater(() -> {
-                            if ("DM".equals(activeCallType)) {
-                                remoteVideoView.setImage(fxImg);
-                            } else if ("GROUP".equals(activeCallType)) {
-                                // Group Mode Grid Logic
+                            if ("DM".equals(activeCallType) || "GROUP".equals(activeCallType)) {
+                                FlowPane targetPane = "DM".equals(activeCallType) ? dmParticipantsPane : participantsPane;
                                 ImageView participantView = activeVideoFeeds.computeIfAbsent(senderId, id -> {
                                     ImageView iv = new ImageView();
                                     iv.setFitWidth(320);
@@ -904,7 +911,9 @@ public class MainController {
                                     javafx.scene.layout.StackPane.setAlignment(nameLbl, javafx.geometry.Pos.BOTTOM_LEFT);
                                     sp.setStyle("-fx-border-color: #5865F2; -fx-border-width: 2; -fx-border-radius: 4;");
                                     
-                                    participantsPane.getChildren().add(sp);
+                                    if (targetPane != null) {
+                                        targetPane.getChildren().add(sp);
+                                    }
                                     return iv;
                                 });
                                 participantView.setImage(fxImg);
@@ -991,7 +1000,7 @@ public class MainController {
         
         activeVideoFeeds.clear();
         if (participantsPane != null) { participantsPane.getChildren().clear(); }
-        if (remoteVideoView != null) { remoteVideoView.setImage(null); }
+        if (dmParticipantsPane != null) { dmParticipantsPane.getChildren().clear(); }
     }
 
     // ═══════════════════════════════════════════════════════════════

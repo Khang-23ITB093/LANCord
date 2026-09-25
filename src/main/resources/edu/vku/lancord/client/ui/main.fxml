@@ -172,14 +172,16 @@
                 </HBox>
 
                 <!-- DM Video Preview (hidden until camera on) -->
-                <HBox fx:id="dmVideoBar" visible="false" managed="false"
-                      alignment="CENTER" spacing="10"
-                      style="-fx-background-color: #000000; -fx-padding: 10;">
-                    <ImageView fx:id="remoteVideoView"
-                               fitWidth="480" fitHeight="270" preserveRatio="true"/>
-                    <ImageView fx:id="localVideoPreview"
-                               fitWidth="160" fitHeight="90" preserveRatio="true"/>
-                </HBox>
+                <VBox fx:id="dmVideoBar" visible="false" managed="false"
+                      spacing="8" styleClass="video-area">
+                    <!-- Self preview still up top -->
+                    <HBox alignment="CENTER_RIGHT" style="-fx-padding: 0 10 0 0;">
+                        <ImageView fx:id="localVideoPreview"
+                                   fitWidth="180" fitHeight="100" preserveRatio="true"/>
+                    </HBox>
+                    <FlowPane fx:id="dmParticipantsPane" hgap="10" vgap="10"
+                              alignment="CENTER"/>
+                </VBox>
 
                 <!-- DM Chat Scroll -->
                 <ScrollPane fx:id="dmChatScroll" VBox.vgrow="ALWAYS" fitToWidth="true"
