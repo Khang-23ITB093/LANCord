@@ -20,12 +20,15 @@ public class UDPStreamReceiver {
 
     private MediaDispatcher dispatcher;
 
-    public UDPStreamReceiver(String multicastIp, int port, MediaDispatcher dispatcher) throws IOException {
+    public UDPStreamReceiver(String multicastIp, int port, MediaDispatcher dispatcher, InetAddress localInterface) throws IOException {
         this.group      = InetAddress.getByName(multicastIp);
         this.port       = port;
         this.dispatcher = dispatcher;
         this.socket     = new MulticastSocket(port);
         this.socket.setReuseAddress(true);
+        if (localInterface != null) {
+            this.socket.setInterface(localInterface);
+        }
         this.socket.joinGroup(group);
         this.staleCleanup = Executors.newSingleThreadScheduledExecutor();
     }

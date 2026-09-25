@@ -54,5 +54,12 @@ public class AudioCaptureThread extends Thread {
         }
     }
 
-    public void stopCapture() { running = false; }
+    public void stopCapture() {
+        running = false;
+        if (line != null) {
+            line.stop();
+            line.close();
+        }
+        interrupt();
+    }
 }

@@ -2,6 +2,7 @@ module edu.vku.lancord {
     // Core Java modules
     requires java.sql;
     requires java.desktop;
+    requires java.prefs;
 
     // JavaFX modules - explicit to prevent visibility errors
     requires javafx.base;

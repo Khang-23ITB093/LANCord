@@ -29,9 +29,11 @@ public class LoginController {
     public static User currentUser;
     public static Queue<Message> pendingMessages = new ConcurrentLinkedQueue<>();
 
+    private java.util.prefs.Preferences prefs = java.util.prefs.Preferences.userNodeForPackage(LoginController.class);
+
     @FXML
     public void initialize() {
-        serverIpField.setText("127.0.0.1");
+        serverIpField.setText(prefs.get("lastServerIp", "127.0.0.1"));
     }
 
     @FXML
@@ -44,6 +46,8 @@ public class LoginController {
             showAlert("Validation Error", "Fields cannot be empty.");
             return;
         }
+
+        prefs.put("lastServerIp", ip);
 
         loginButton.setDisable(true);
         registerButton.setDisable(true);
@@ -82,6 +86,8 @@ public class LoginController {
             showAlert("Validation Error", "Fields cannot be empty.");
             return;
         }
+        
+        prefs.put("lastServerIp", ip);
 
 //        if (username.length() < 3 || username.contains(" ")) {
 //            showAlert("Validation Error", "Username must be at least 3 characters and contain no spaces.");

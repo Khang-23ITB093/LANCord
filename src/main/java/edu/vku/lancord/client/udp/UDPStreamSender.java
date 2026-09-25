@@ -15,11 +15,14 @@ public class UDPStreamSender {
     private volatile byte senderId;
     private final AtomicInteger seqIdCounter = new AtomicInteger(0);
 
-    public UDPStreamSender(String multicastIp, int port, byte senderId) throws IOException {
+    public UDPStreamSender(String multicastIp, int port, byte senderId, InetAddress localInterface) throws IOException {
         this.group    = InetAddress.getByName(multicastIp);
         this.port     = port;
         this.senderId = senderId;
         this.socket   = new MulticastSocket();
+        if (localInterface != null) {
+            this.socket.setInterface(localInterface);
+        }
         this.socket.setTimeToLive(32); // limit to LAN; increase for WAN
     }
 

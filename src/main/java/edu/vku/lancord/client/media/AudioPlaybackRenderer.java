@@ -45,7 +45,7 @@ public class AudioPlaybackRenderer {
             playbackThread.interrupt();
         }
         if (line != null) {
-            line.drain();
+            line.stop();
             line.close();
         }
     }

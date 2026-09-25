@@ -65,4 +65,8 @@ public class TCPConnection {
     public boolean isConnected() {
         return socket != null && !socket.isClosed();
     }
+
+    public java.net.InetAddress getLocalAddress() {
+        return socket != null ? socket.getLocalAddress() : null;
+    }
 }

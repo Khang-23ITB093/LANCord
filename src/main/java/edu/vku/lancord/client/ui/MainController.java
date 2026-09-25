@@ -752,8 +752,9 @@ public class MainController {
         try {
             audioPlayback = new AudioPlaybackRenderer();
             byte initialSenderId = (streamUserId == LoginController.currentUser.getId()) ? senderId : 0;
-            currentStreamSender   = new UDPStreamSender(ip, port, initialSenderId);
-            currentStreamReceiver = new UDPStreamReceiver(ip, port, this::onMediaReceived);
+            java.net.InetAddress localAddr = LoginController.connection.getLocalAddress();
+            currentStreamSender   = new UDPStreamSender(ip, port, initialSenderId, localAddr);
+            currentStreamReceiver = new UDPStreamReceiver(ip, port, this::onMediaReceived, localAddr);
             currentStreamReceiver.start();
             inCall = true;
             activeCallType = intendedCallType;
