@@ -83,20 +83,134 @@ sequenceDiagram
 
 ---
 
-## 4. Giải phẫu chi tiết mã nguồn Gửi (UDPStreamSender)
+## 4. Giải phẫu chi tiết mã nguồn
 
-Theo đoạn mã nguồn ở file `UDPStreamSender.java` (dòng 16-40), luồng xử lý bên trong một phiên Sender diễn ra như sau:
+> ⚠️ **Lưu ý quan trọng:** Project có 2 package UDP — `client/network/` (code cũ, không sử dụng) và `client/udp/` (code thực tế đang chạy). `MainController.java` import từ `client.udp.*`. Mọi mô tả dưới đây dựa trên **`client/udp/`**.
 
-1. **Khởi tạo (Khôn ngoan):** `socket = new MulticastSocket();` 
-   -> Không cần IP Server. Chỉ cần lấy quyền mở port UDP.
-2. **Xác định đích đến:** `InetAddress group = InetAddress.getByName(multicastIp);`
-   -> Địa chỉ này là do TCP Server (Signaling) cấp thông qua tin nhắn TCP.
-3. **Chụp hình liên tục (Vòng lặp `while(streaming)`):**
-   -> Dùng `java.awt.Robot` để chụp toàn màn hình.
-4. **Nén hình (Quan trọng):**
-   -> Dùng `ImageIO` nén ảnh về định dạng `JPG`. Ảnh RAW rất nặng, ép về JPG là để tránh quá tải buffer UDP mạng LAN.
-5. **Cắt mảnh (Chunking):**
-   -> Gói tin UDP tối đa là 64KB, file JPG lớn hơn nên phải cắt thành các mảnh (Chunks) nhỏ (tối đa 60KB).
-   -> Header 8-byte được gắn vào đầu mỗi chunk: `[TotalChunks (4 bytes)] + [ChunkIndex (4 bytes)]` để máy người xem (Receiver) biết thứ tự mà nối lại thành 1 ảnh hoàn chỉnh.
-6. **Bắn ra mạng:** `socket.send(packet);`
-   -> Chỉ cần gọi lệnh này 1 lần. Công việc còn lại do Switch phần cứng ở giữa lo liệu. Đảm bảo mô hình P2P Group được vận hành mượt mà.
+### 4.1 UDPStreamSender (`client/udp/UDPStreamSender.java`)
+
+Sender **không** tự chụp màn hình. Trách nhiệm của nó chỉ là **nhận byte thô và phân mảnh rồi gửi đi**. Việc thu thập dữ liệu do 3 thread riêng đảm nhiệm.
+
+```
+Khởi tạo: UDPStreamSender(multicastIp, port, senderId)
+├─ socket = new MulticastSocket()              ← Không kết nối Server
+├─ group  = InetAddress.getByName(multicastIp) ← IP do TCP Server cấp
+├─ socket.setTimeToLive(32)                    ← Giới hạn phạm vi LAN
+└─ seqIdCounter = new AtomicInteger(0)         ← Đếm số thứ tự frame
+
+3 Thread nguồn gọi vào Sender:
+├─ ScreenCaptureThread  → sender.sendScreen(jpegBytes, isKeyframe)
+├─ WebcamCaptureThread  → sender.sendWebcam(jpegBytes, isKeyframe)
+└─ AudioCaptureThread   → sender.sendAudio(pcmBytes)
+
+sendFragmented(mediaType, data, isKeyframe):
+├─ totalFrags = ceil(data.length / 1388)
+├─ seqId = seqIdCounter.getAndIncrement() & 0xFFFF
+│
+└─ FOR i = 0..totalFrags-1:
+    ├─ flags = FLAG_IS_FRAGMENT (0x01)
+    │   if i == last:   flags |= FLAG_IS_LAST_FRAGMENT (0x02)
+    │   if isKeyframe:  flags |= FLAG_IS_KEYFRAME      (0x04)
+    │
+    ├─ header = UDPHeader.encode(mediaType, flags, seqId,
+    │                            fragIndex=i, totalFrags,
+    │                            payloadLen, senderId)
+    │   → 12 bytes BIG_ENDIAN:
+    │   [mediaType:1B][flags:1B][seqId:2B][fragIndex:2B]
+    │   [totalFrags:2B][payloadLen:2B][senderId:1B][reserved:1B]
+    │
+    ├─ packet = header(12B) + payload(≤1388B)
+    └─ socket.send(new DatagramPacket(packet, ..., group, port))
+```
+
+### 4.2 UDPStreamReceiver (`client/udp/UDPStreamReceiver.java`)
+
+```
+Khởi tạo: UDPStreamReceiver(multicastIp, port, dispatcher)
+├─ socket = new MulticastSocket(port)
+├─ socket.setReuseAddress(true)
+├─ socket.joinGroup(group)           ← Đăng ký nhận gói Multicast từ LAN
+└─ staleCleanup = ScheduledExecutor  ← Dọn rác mỗi 500ms
+
+start():
+├─ receiveThread = new Thread(this::receiveLoop)
+│   receiveThread.setDaemon(true)    ← Không block JVM tắt
+└─ staleCleanup.scheduleAtFixedRate(cleanStaleBuffers, 500ms)
+
+receiveLoop():
+└─ while(running):
+    socket.receive(pkt)              ← Blocking, chờ gói UDP từ mạng
+    processPacket(pkt)
+
+processPacket(pkt):
+├─ if pkt.length < 12: return        ← Bỏ gói dị dạng
+├─ h = UDPHeader.decode(data)        ← Giải mã 12-byte header
+├─ payload = data[12 .. 12+payloadLen]
+├─ key = senderId + ":" + seqId      ← Định danh duy nhất cho 1 frame
+│
+├─ IF totalFrags == 1:               ← Gói nhỏ (audio ≤1388B)
+│   dispatcher.onMedia(senderId, mediaType, payload)
+│   return
+│
+└─ ELSE (gói lớn, cần ghép mảnh):
+    buf = fragmentMap.computeIfAbsent(key, k → new FragmentBuffer(h))
+    synchronized(buf):
+        buf.fragments[fragIndex] = payload
+        buf.receivedCount++
+        if receivedCount == totalFrags:
+            full = nối tất cả buf.fragments[]
+            fragmentMap.remove(key)
+            dispatcher.onMedia(senderId, mediaType, full)
+
+cleanStaleBuffers() [mỗi 500ms]:
+└─ fragmentMap.removeIf(entry → now - entry.createdAt > 2000ms)
+   ← Dọn frame chưa hoàn tất do mất gói UDP (frame-skip)
+
+MediaDispatcher.onMedia(senderId, mediaType, full):
+[Lambda định nghĩa trong MainController]
+├─ MEDIA_AUDIO  (0x00): audioRenderers.get(senderId).enqueue(full)
+│                         → SourceDataLine.write() phát ra loa
+├─ MEDIA_WEBCAM (0x01): Platform.runLater(() → webcamView.setImage(...))
+└─ MEDIA_SCREEN (0x02): Platform.runLater(() → screenView.setImage(...))
+```
+
+---
+
+### 4.3 Cập nhật sơ đồ Group Share (chính xác theo code)
+
+```mermaid
+sequenceDiagram
+    participant SC as ScreenCaptureThread
+    participant S as UDPStreamSender (client/udp)
+    participant C as Client A
+    participant TCP as TCP Server
+    participant B as Client B
+    participant R as UDPStreamReceiver (client/udp)
+    participant D as MediaDispatcher (lambda)
+
+    Note over C,TCP: GIAI ĐOẠN 1: SIGNALING (TCP)
+    C->>TCP: STREAM_START {channelId, groupId}
+    TCP-->>TCP: getMulticastIpForChannel() → 230.0.0.1
+    TCP-->>TCP: assignSenderId() → senderId=1
+    TCP->>C: STREAM_STARTED {multicastIp, port=9999, senderId=1}
+    TCP->>B: STREAM_STARTED {multicastIp, port=9999, streamerNames}
+
+    Note over SC,R: GIAI ĐOẠN 2: P2P MEDIA (UDP)
+    C->>S: new UDPStreamSender("230.0.0.1", 9999, senderId=1)
+    B->>R: new UDPStreamReceiver("230.0.0.1", 9999, dispatcher)
+    R->>R: socket.joinGroup("230.0.0.1")
+    B->>R: start() → receiveThread.setDaemon(true)
+
+    loop 10 FPS (ScreenCaptureThread)
+        SC->>SC: Robot.createScreenCapture() → scale → JPEG 50%
+        SC->>S: sender.sendScreen(jpegBytes, isKeyframe)
+        S->>S: sendFragmented() → cắt thành N mảnh 1388B
+        S-->>R: DatagramPacket × N (header 12B + payload)
+        Note right of S: Switch LAN tự nhân bản → B
+        R->>R: processPacket: UDPHeader.decode() → FragmentBuffer
+        R->>R: receivedCount == totalFrags → ghép full[]
+        R->>D: dispatcher.onMedia(senderId, SCREEN, full)
+        D->>B: Platform.runLater → screenView.setImage(image)
+    end
+```
+
