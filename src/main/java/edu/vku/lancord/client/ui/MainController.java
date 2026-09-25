@@ -250,6 +250,13 @@ public class MainController {
             p.put("contextId", groupId);
             LoginController.connection.sendMessage(new Message(MessageType.GET_CHAT_HISTORY, p));
         } catch (Exception e) { e.printStackTrace(); }
+
+        try {
+            ObjectNode p = JsonUtil.createObjectNode();
+            p.put("contextType", "GROUP");
+            p.put("contextId", groupId);
+            LoginController.connection.sendMessage(new Message(MessageType.GET_FILES_IN_CONTEXT, p));
+        } catch (Exception e) { e.printStackTrace(); }
     }
 
     private void syncVideoUIVisibility() {
@@ -389,13 +396,16 @@ public class MainController {
         List<ChatMessage> history = JsonUtil.treeToValue(
             payload.get("messages"), new TypeReference<List<ChatMessage>>() {});
         VBox chatBox = activeChatBox();
-        chatBox.getChildren().clear();
+        // Removed chatBox.getChildren().clear() to preserve files loaded from GET_FILES_IN_CONTEXT
         if (history != null) {
             for (ChatMessage m : history) {
                 String sender = m.getSenderName() != null ? m.getSenderName() : "Unknown";
                 Date   ts     = m.getCreatedAt() != null ? new Date(m.getCreatedAt().getTime()) : null;
-                chatBox.getChildren().add(buildTextMessage(sender, m.getContent(), ts));
+                Node node = buildTextMessage(sender, m.getContent(), ts);
+                node.setUserData(ts != null ? ts.getTime() : 0L);
+                chatBox.getChildren().add(node);
             }
+            sortChatBox(chatBox);
         }
     }
 
@@ -415,8 +425,24 @@ public class MainController {
         for (FileMetadata meta : files) {
             String sender = meta.getUploaderName() != null ? meta.getUploaderName() : "Unknown";
             Date   ts     = meta.getCreatedAt() != null ? new Date(meta.getCreatedAt().getTime()) : null;
-            chatBox.getChildren().add(buildFileMessage(sender, meta, ts));
+            Node node = buildFileMessage(sender, meta, ts);
+            node.setUserData(ts != null ? ts.getTime() : 0L);
+            chatBox.getChildren().add(node);
         }
+        sortChatBox(chatBox);
+    }
+    
+    private void sortChatBox(VBox chatBox) {
+        javafx.collections.ObservableList<Node> children = chatBox.getChildren();
+        java.util.List<Node> copy = new java.util.ArrayList<>(children);
+        copy.sort((n1, n2) -> {
+            Long t1 = (Long) n1.getUserData();
+            Long t2 = (Long) n2.getUserData();
+            if (t1 == null) t1 = 0L;
+            if (t2 == null) t2 = 0L;
+            return t1.compareTo(t2);
+        });
+        chatBox.getChildren().setAll(copy);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -440,7 +466,10 @@ public class MainController {
 
         String sender = msg.getSenderName() != null ? msg.getSenderName() : "Unknown";
         Date   ts     = msg.getCreatedAt() != null ? new Date(msg.getCreatedAt().getTime()) : new Date();
-        activeChatBox().getChildren().add(buildTextMessage(sender, msg.getContent(), ts));
+        Node node = buildTextMessage(sender, msg.getContent(), ts);
+        node.setUserData(ts != null ? ts.getTime() : 0L);
+        activeChatBox().getChildren().add(node);
+        sortChatBox(activeChatBox());
 
         Platform.runLater(() -> {
             if (currentContextType.equals("DM")) dmChatScroll.setVvalue(1.0);
@@ -569,7 +598,10 @@ public class MainController {
         String sender = meta.getUploaderName() != null ? meta.getUploaderName()
                       : LoginController.currentUser.getUsername();
         Date ts = meta.getCreatedAt() != null ? new Date(meta.getCreatedAt().getTime()) : new Date();
-        activeChatBox().getChildren().add(buildFileMessage(sender, meta, ts));
+        Node node = buildFileMessage(sender, meta, ts);
+        node.setUserData(ts != null ? ts.getTime() : 0L);
+        activeChatBox().getChildren().add(node);
+        sortChatBox(activeChatBox());
     }
 
     // ═══════════════════════════════════════════════════════════════
