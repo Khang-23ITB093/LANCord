@@ -25,7 +25,7 @@
                 <Label fx:id="fileNameLabel" styleClass="file-name-label" wrapText="true"/>
                 <Label fx:id="fileSizeLabel" styleClass="message-timestamp"/>
             </VBox>
-            <Button fx:id="downloadButton" text="Download &amp; Watch" onAction="#onDownload" styleClass="download-btn"/>
+            <Button fx:id="actionButton" text="Download &amp; Watch" onAction="#onActionClicked" styleClass="download-btn"/>
         </HBox>
         <Label fx:id="statusLabel" styleClass="message-timestamp" text=""/>
     </VBox>

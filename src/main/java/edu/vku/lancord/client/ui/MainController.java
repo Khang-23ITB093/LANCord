@@ -1147,7 +1147,8 @@ public class MainController {
 
     private void loadLocalUploadPaths() {
         try {
-            File file = new File("client_downloads/upload_cache.properties");
+            File dir = new File("client_downloads");
+            File file = new File(dir, "upload_cache.properties");
             if (file.exists()) {
                 Properties props = new Properties();
                 try (FileInputStream fis = new FileInputStream(file)) {
@@ -1162,13 +1163,14 @@ public class MainController {
 
     private void saveLocalUploadPaths() {
         try {
-            Path dir = Paths.get("client_downloads");
-            if (!Files.exists(dir)) Files.createDirectories(dir);
+            File dir = new File("client_downloads");
+            if (!dir.exists()) dir.mkdirs();
             Properties props = new Properties();
             for (Map.Entry<Integer, String> entry : localUploadPaths.entrySet()) {
                 props.setProperty(String.valueOf(entry.getKey()), entry.getValue());
             }
-            try (FileOutputStream fos = new FileOutputStream("client_downloads/upload_cache.properties")) {
+            File file = new File(dir, "upload_cache.properties");
+            try (FileOutputStream fos = new FileOutputStream(file)) {
                 props.store(fos, "Local paths for uploaded files");
             }
         } catch (Exception e) { System.err.println("Failed to save local upload paths: " + e.getMessage()); }

@@ -83,15 +83,15 @@ public class LoginController {
             return;
         }
 
-        if (username.length() < 3 || username.contains(" ")) {
-            showAlert("Validation Error", "Username must be at least 3 characters and contain no spaces.");
-            return;
-        }
-
-        if (password.length() < 6) {
-            showAlert("Validation Error", "Password must be at least 6 characters.");
-            return;
-        }
+//        if (username.length() < 3 || username.contains(" ")) {
+//            showAlert("Validation Error", "Username must be at least 3 characters and contain no spaces.");
+//            return;
+//        }
+//
+//        if (password.length() < 6) {
+//            showAlert("Validation Error", "Password must be at least 6 characters.");
+//            return;
+//        }
 
         if (!password.equals(confirmPassword)) {
             showAlert("Validation Error", "Passwords do not match.");
