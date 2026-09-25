@@ -67,6 +67,28 @@ public class TCPConnection {
     }
 
     public java.net.InetAddress getLocalAddress() {
-        return socket != null ? socket.getLocalAddress() : null;
+        if (socket == null) return null;
+        java.net.InetAddress addr = socket.getLocalAddress();
+        if (addr != null && addr.isLoopbackAddress()) {
+            try {
+                java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+                while (interfaces.hasMoreElements()) {
+                    java.net.NetworkInterface ni = interfaces.nextElement();
+                    if (ni.isLoopback() || !ni.isUp() || ni.isVirtual()) continue;
+                    String name = ni.getName().toLowerCase();
+                    if (name.contains("vbox") || name.contains("vmware") || name.contains("wsl") || name.contains("docker")) continue;
+                    java.util.Enumeration<java.net.InetAddress> addresses = ni.getInetAddresses();
+                    while (addresses.hasMoreElements()) {
+                        java.net.InetAddress ia = addresses.nextElement();
+                        if (ia instanceof java.net.Inet4Address) {
+                            return ia;
+                        }
+                    }
+                }
+            } catch (java.net.SocketException e) {
+                e.printStackTrace();
+            }
+        }
+        return addr;
     }
 }
