@@ -17,6 +17,7 @@ public class UDPStreamReceiver {
     private final ScheduledExecutorService staleCleanup;
     private volatile boolean running = false;
     private Thread receiveThread;
+    private java.net.NetworkInterface netIf;
 
     private MediaDispatcher dispatcher;
 
@@ -28,8 +29,15 @@ public class UDPStreamReceiver {
         this.socket.setReuseAddress(true);
         if (localInterface != null) {
             this.socket.setInterface(localInterface);
+            this.netIf = java.net.NetworkInterface.getByInetAddress(localInterface);
         }
-        this.socket.joinGroup(group);
+        
+        if (this.netIf != null) {
+            this.socket.joinGroup(new java.net.InetSocketAddress(group, port), this.netIf);
+        } else {
+            this.socket.joinGroup(group);
+        }
+        
         this.staleCleanup = Executors.newSingleThreadScheduledExecutor();
     }
 
@@ -104,7 +112,11 @@ public class UDPStreamReceiver {
     public void stop() {
         running = false;
         try {
-            socket.leaveGroup(group);
+            if (this.netIf != null) {
+                socket.leaveGroup(new java.net.InetSocketAddress(group, port), this.netIf);
+            } else {
+                socket.leaveGroup(group);
+            }
         } catch (IOException ignored) {}
         socket.close();
         staleCleanup.shutdown();
