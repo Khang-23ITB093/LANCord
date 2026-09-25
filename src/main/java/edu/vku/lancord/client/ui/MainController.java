@@ -267,15 +267,23 @@ public class MainController {
         if (activeCallType == null) {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
+            showDMCallBar(false);
+            showGroupLiveBar(false);
         } else if (activeCallType.equals("DM") && activeCallId == currentContextId && currentContextType.equals("DM")) {
             // Show video bar if local camera is actively capturing OR we are receiving a remote video frame
             setNodeVisible(dmVideoBar, isLocalCapturing || isRemoteDMVisible);
+            showDMCallBar(true);
+            showGroupLiveBar(false);
         } else if (activeCallType.equals("GROUP") && activeCallId == currentContextId && currentContextType.equals("GROUP")) {
             // Video area shown if cam or screen is active OR we are watching others
             setNodeVisible(groupVideoArea, isLocalCapturing || isRemoteGroupVisible);
+            showDMCallBar(false);
+            showGroupLiveBar(true);
         } else {
             setNodeVisible(dmVideoBar, false);
             setNodeVisible(groupVideoArea, false);
+            showDMCallBar(false);
+            showGroupLiveBar(false);
         }
     }
 
@@ -769,8 +777,14 @@ public class MainController {
                     });
                 }
                 syncVideoUIVisibility();
+                return;
+            } else {
+                if (streamUserId == LoginController.currentUser.getId()) {
+                    onEndCall(); // We initiated a stream in a new channel, leave the old one
+                } else {
+                    return; // Someone else went live in another channel, ignore
+                }
             }
-            return;
         }
 
         if (payload.has("streamerNames")) {
@@ -906,6 +920,7 @@ public class MainController {
     // ── Show/hide DM call bar ───────────────────────────────────────────────
     private void showDMCallBar(boolean show) {
         if (show) {
+            if (dmCallBar.isVisible()) return;
             dmCallBar.setVisible(true);
             dmCallBar.setManaged(true);
             dmCallBar.setTranslateY(-40);
@@ -923,6 +938,7 @@ public class MainController {
     // ── Show/hide Group live bar ────────────────────────────────────────────
     private void showGroupLiveBar(boolean show) {
         if (show) {
+            if (groupLiveBar.isVisible()) return;
             groupLiveBar.setVisible(true);
             groupLiveBar.setManaged(true);
             groupLiveBar.setTranslateY(-40);
