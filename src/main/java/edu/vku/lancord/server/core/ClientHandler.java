@@ -271,11 +271,15 @@ public class ClientHandler implements Runnable {
                 if (meta.getContextType().equals("DM")) {
                     ServerManager.sendToUser(meta.getContextId(), notifyMsg);
                 } else {
-                    List<Integer> members = GroupRepo.getGroupMembers(meta.getContextId());
-                    // Exclude uploader from notify (they already got FILE_UPLOAD_COMPLETE)
-                    for (int memberId : members) {
-                        if (memberId != user.getId()) {
-                            ServerManager.sendToUser(memberId, notifyMsg);
+                    if (meta.getContextId() == 1) { // General Channel
+                        ServerManager.broadcastExcluding(user.getId(), notifyMsg);
+                    } else {
+                        List<Integer> members = GroupRepo.getGroupMembers(meta.getContextId());
+                        // Exclude uploader from notify (they already got FILE_UPLOAD_COMPLETE)
+                        for (int memberId : members) {
+                            if (memberId != user.getId()) {
+                                ServerManager.sendToUser(memberId, notifyMsg);
+                            }
                         }
                     }
                 }

@@ -59,6 +59,14 @@ public class ServerManager {
         }
     }
 
+    public static void broadcastExcluding(int excludedUserId, Message message) {
+        for (Map.Entry<Integer, ClientHandler> entry : onlineUsers.entrySet()) {
+            if (entry.getKey() != excludedUserId) {
+                entry.getValue().sendMessage(message);
+            }
+        }
+    }
+
     public static void sendToUser(int userId, Message message) {
         ClientHandler handler = onlineUsers.get(userId);
         if (handler != null) {
